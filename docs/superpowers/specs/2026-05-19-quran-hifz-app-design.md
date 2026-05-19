@@ -41,9 +41,9 @@ All older memorised pages. Scheduled using the SM-2 spaced repetition algorithm.
 - `repetitions` — successful review streak
 
 **Rating → rep suggestion mapping (revision):**
-- Weak → 5 reps suggested
-- Okay → 3 reps suggested
-- Strong → 1 rep suggested
+- Weak → 15 reps suggested
+- Okay → 10 reps suggested
+- Strong → 5 reps suggested
 
 The user rates each page manually after reciting — Weak, Okay, or Strong.
 
@@ -153,7 +153,7 @@ Entered from "Start Today's Revision" on the dashboard. Covers all due pages (re
 2. Page info — surah, juz, type (recent/spaced), last reviewed date
 3. Ayah text — **hidden by default**, user recites first, then taps to reveal and check
 4. Rating buttons — Weak / Okay / Strong
-5. Suggested reps appear after rating (weak → 5, okay → 3, strong → 1)
+5. Suggested reps appear after rating (weak → 15, okay → 10, strong → 5)
 6. Rep counter — user taps "+ Log rep" for each repetition
 7. "Next page" advances; "Skip" skips without rating (page stays due)
 
