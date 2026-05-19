@@ -1,0 +1,174 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; padding: 20px; }
+  .app-shell { max-width: 420px; margin: 0 auto; }
+
+  .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .back-btn { background: #1e293b; border: none; color: #94a3b8; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
+  .top-bar h1 { font-size: 17px; font-weight: 700; color: #fff; flex: 1; }
+
+  .session-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .sp-text { font-size: 13px; color: #64748b; white-space: nowrap; }
+  .sp-bar-wrap { flex: 1; background: #1e293b; border-radius: 99px; height: 6px; }
+  .sp-bar { background: linear-gradient(90deg, #8b5cf6, #a78bfa); height: 6px; border-radius: 99px; width: 30%; }
+
+  .page-info { background: #1e293b; border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .pi-title { font-size: 16px; font-weight: 700; color: #fff; }
+  .pi-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .pi-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #8b5cf6; font-weight: 700; }
+  .pi-last { font-size: 11px; color: #475569; margin-top: 2px; text-align: right; }
+
+  /* RECITATION CARD */
+  .recite-card { background: #1e293b; border-radius: 14px; padding: 20px; margin-bottom: 14px; position: relative; }
+  .recite-card.listening { border: 2px solid #8b5cf6; box-shadow: 0 0 0 4px rgba(139,92,246,0.1); }
+
+  .listening-badge { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+  .listening-badge span { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ARABIC TEXT with word highlights */
+  .ayah-text { font-size: 22px; line-height: 2.4; color: #f1f5f9; font-family: 'Amiri', 'Traditional Arabic', serif; text-align: right; direction: rtl; }
+  .word { display: inline; border-radius: 4px; padding: 0 2px; transition: background 0.2s; cursor: default; }
+  .word.correct { color: #4ade80; background: rgba(34,197,94,0.12); }
+  .word.error { color: #f87171; background: rgba(239,68,68,0.18); text-decoration: underline; text-decoration-color: #ef4444; }
+  .word.current { color: #fff; background: rgba(139,92,246,0.25); border-bottom: 2px solid #8b5cf6; }
+  .word.pending { color: #475569; }
+
+  .ayah-ref { font-size: 11px; color: #475569; margin-top: 12px; text-align: left; direction: ltr; }
+
+  /* ERROR FEEDBACK */
+  .error-feedback { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .error-feedback .ef-icon { font-size: 16px; }
+  .error-feedback .ef-text { font-size: 13px; color: #fca5a5; }
+  .error-feedback .ef-expected { font-size: 16px; color: #f87171; font-family: 'Amiri', 'Traditional Arabic', serif; direction: rtl; }
+
+  /* MIC BUTTON */
+  .mic-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .mic-btn { width: 72px; height: 72px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 28px; transition: transform 0.15s; }
+  .mic-btn.listening { background: linear-gradient(135deg, #6d28d9, #8b5cf6); box-shadow: 0 0 0 8px rgba(139,92,246,0.2), 0 0 0 16px rgba(139,92,246,0.07); }
+  .mic-btn.idle { background: #1e293b; border: 2px solid #334155; }
+  .mic-btn:active { transform: scale(0.95); }
+  .mic-label { font-size: 13px; color: #64748b; font-weight: 600; }
+
+  /* WAVEFORM */
+  .waveform { display: flex; align-items: center; gap: 3px; height: 24px; }
+  .wave-bar { width: 3px; border-radius: 99px; background: #8b5cf6; }
+  .wave-bar:nth-child(1) { height: 8px; opacity: 0.4; }
+  .wave-bar:nth-child(2) { height: 18px; opacity: 0.7; }
+  .wave-bar:nth-child(3) { height: 24px; opacity: 1; }
+  .wave-bar:nth-child(4) { height: 14px; opacity: 0.8; }
+  .wave-bar:nth-child(5) { height: 20px; opacity: 0.9; }
+  .wave-bar:nth-child(6) { height: 10px; opacity: 0.5; }
+  .wave-bar:nth-child(7) { height: 16px; opacity: 0.7; }
+
+  /* BOTTOM ACTIONS */
+  .bottom-row { display: flex; gap: 8px; }
+  .retry-btn { flex: 1; background: #1e293b; border: 1px solid #334155; color: #94a3b8; border-radius: 12px; padding: 13px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .next-btn { flex: 2; background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+  /* SCORE */
+  .score-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .score-chip { flex: 1; background: #0f172a; border-radius: 10px; padding: 10px; text-align: center; }
+  .score-chip .sc-val { font-size: 18px; font-weight: 800; }
+  .score-chip .sc-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+  .score-chip.correct .sc-val { color: #4ade80; }
+  .score-chip.errors .sc-val { color: #f87171; }
+  .score-chip.pct .sc-val { color: #60a5fa; }
+</style>
+
+<div class="app-shell">
+
+  <div class="top-bar">
+    <button class="back-btn">← Back</button>
+    <h1>Recite Mode</h1>
+  </div>
+
+  <div class="session-progress">
+    <div class="sp-text">Page 3 of 10</div>
+    <div class="sp-bar-wrap"><div class="sp-bar"></div></div>
+    <div class="sp-text">7 left</div>
+  </div>
+
+  <div class="page-info">
+    <div>
+      <div class="pi-title">Page 46</div>
+      <div class="pi-sub">Al-Baqarah · Juz 1</div>
+    </div>
+    <div>
+      <div class="pi-type">🧠 From Memory</div>
+      <div class="pi-last">Last: 14 days ago</div>
+    </div>
+  </div>
+
+  <!-- RECITATION CARD — text with word-level highlighting -->
+  <div class="recite-card listening">
+    <div class="listening-badge">
+      <div class="pulse-dot"></div>
+      <span>Listening · Tarteel AI</span>
+      <div style="margin-left:auto">
+        <div class="waveform">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ayah-text">
+      <span class="word correct">وَإِذَا</span>
+      <span class="word correct">لَقُوا۟</span>
+      <span class="word correct">ٱلَّذِينَ</span>
+      <span class="word correct">ءَامَنُوا۟</span>
+      <span class="word error">قَالُوٓا۟</span>
+      <span class="word current">ءَامَنَّا</span>
+      <span class="word pending">وَإِذَا</span>
+      <span class="word pending">خَلَوْا۟</span>
+      <span class="word pending">إِلَىٰ</span>
+      <span class="word pending">شَيَـٰطِينِهِمْ</span>
+    </div>
+
+    <div class="ayah-ref">Al-Baqarah 2:14 · Page 46</div>
+  </div>
+
+  <!-- ERROR FEEDBACK -->
+  <div class="error-feedback">
+    <div class="ef-icon">⚠️</div>
+    <div>
+      <div class="ef-text">You said something different. Expected:</div>
+      <div class="ef-expected">قَالُوٓا۟</div>
+    </div>
+  </div>
+
+  <!-- LIVE SCORE -->
+  <div class="score-row">
+    <div class="score-chip correct">
+      <div class="sc-val">4</div>
+      <div class="sc-label">Correct</div>
+    </div>
+    <div class="score-chip errors">
+      <div class="sc-val">1</div>
+      <div class="sc-label">Errors</div>
+    </div>
+    <div class="score-chip pct">
+      <div class="sc-val">80%</div>
+      <div class="sc-label">Accuracy</div>
+    </div>
+  </div>
+
+  <!-- MIC -->
+  <div class="mic-section">
+    <button class="mic-btn listening">🎙️</button>
+    <div class="mic-label">Tap to stop</div>
+  </div>
+
+  <div class="bottom-row">
+    <button class="retry-btn">↩ Retry page</button>
+    <button class="next-btn">Next page →</button>
+  </div>
+
+</div>

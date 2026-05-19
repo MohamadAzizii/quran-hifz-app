@@ -1,0 +1,159 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; padding: 20px; }
+  .app-shell { max-width: 420px; margin: 0 auto; }
+
+  .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .back-btn { background: #1e293b; border: none; color: #94a3b8; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
+  .top-bar h1 { font-size: 17px; font-weight: 700; color: #fff; flex: 1; }
+  .top-bar .page-badge { background: #1e293b; border-radius: 8px; padding: 5px 10px; font-size: 12px; color: #64748b; font-weight: 600; }
+
+  /* AYAH DISPLAY */
+  .ayah-card { background: #1e293b; border-radius: 14px; padding: 20px; margin-bottom: 16px; text-align: right; direction: rtl; position: relative; }
+  .ayah-card .ayah-text { font-size: 22px; line-height: 2; color: #f1f5f9; font-family: 'Amiri', 'Traditional Arabic', serif; }
+  .ayah-card .ayah-ref { text-align: left; direction: ltr; font-size: 11px; color: #64748b; margin-top: 10px; }
+  .hide-overlay { position: absolute; inset: 0; border-radius: 14px; background: rgba(15,17,23,0.97); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; cursor: pointer; }
+  .hide-overlay .ho-label { font-size: 14px; color: #64748b; font-weight: 600; }
+  .hide-overlay .ho-sub { font-size: 12px; color: #475569; }
+  .toggle-visibility { width: 100%; background: #1e293b; border: 1px solid #334155; color: #94a3b8; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 16px; }
+
+  /* REP TRACKING */
+  .rep-section { background: #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+  .rep-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 14px; }
+
+  .rep-type { margin-bottom: 14px; }
+  .rep-type:last-child { margin-bottom: 0; }
+  .rep-type-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .rep-type-label { display: flex; align-items: center; gap: 8px; }
+  .rep-type-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .rep-type-icon.looking { background: rgba(59,130,246,0.15); }
+  .rep-type-icon.memory { background: rgba(139,92,246,0.15); }
+  .rep-type-name { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+  .rep-type-name span { font-size: 12px; color: #64748b; font-weight: 400; }
+  .rep-count { font-size: 22px; font-weight: 800; color: #fff; }
+  .rep-count small { font-size: 13px; font-weight: 500; color: #64748b; }
+
+  .rep-dots { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .rep-dot { width: 16px; height: 16px; border-radius: 50%; }
+  .rep-dot.done-look { background: #3b82f6; }
+  .rep-dot.done-mem { background: #8b5cf6; }
+  .rep-dot.remaining { background: rgba(255,255,255,0.07); }
+
+  .rep-btn { width: 100%; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .rep-btn.looking { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: #fff; }
+  .rep-btn.memory { background: linear-gradient(135deg, #6d28d9, #8b5cf6); color: #fff; }
+
+  .divider { height: 1px; background: #1e293b; margin: 4px 0 14px; }
+
+  /* PROGRESS SUMMARY */
+  .progress-summary { background: #0f172a; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-around; margin-bottom: 16px; }
+  .ps-item { text-align: center; }
+  .ps-item .ps-val { font-size: 18px; font-weight: 800; color: #fff; }
+  .ps-item .ps-val.look { color: #60a5fa; }
+  .ps-item .ps-val.mem { color: #a78bfa; }
+  .ps-item .ps-label { font-size: 10px; color: #64748b; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .done-btn { width: 100%; background: #052e16; border: 1px solid #16a34a; color: #4ade80; border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+</style>
+
+<div class="app-shell">
+
+  <div class="top-bar">
+    <button class="back-btn">← Back</button>
+    <h1>New Memorisation</h1>
+    <div class="page-badge">Page 142</div>
+  </div>
+
+  <!-- AYAH DISPLAY with hide overlay -->
+  <div class="ayah-card">
+    <div class="ayah-text">
+      بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ ۝ وَهُوَ ٱلَّذِي جَعَلَكُمْ خَلَـٰٓئِفَ ٱلْأَرْضِ وَرَفَعَ بَعْضَكُمْ فَوْقَ بَعْضٍ
+    </div>
+    <div class="ayah-ref">Al-An'am 6:165 · Page 142</div>
+    <!-- Overlay (shown when hiding text) — toggle with button below -->
+    <!-- <div class="hide-overlay">
+      <div class="ho-label">Text hidden</div>
+      <div class="ho-sub">Tap to reveal</div>
+    </div> -->
+  </div>
+
+  <button class="toggle-visibility">👁 Hide text (test yourself)</button>
+
+  <!-- REP TRACKING -->
+  <div class="rep-section">
+    <div class="rep-section-title">Track your repetitions</div>
+
+    <!-- With mushaf -->
+    <div class="rep-type">
+      <div class="rep-type-header">
+        <div class="rep-type-label">
+          <div class="rep-type-icon looking">📖</div>
+          <div class="rep-type-name">With Mushaf <span>· looking</span></div>
+        </div>
+        <div class="rep-count look">8 <small>/ 12</small></div>
+      </div>
+      <div class="rep-dots">
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot done-look"></div>
+        <div class="rep-dot remaining"></div>
+        <div class="rep-dot remaining"></div>
+        <div class="rep-dot remaining"></div>
+        <div class="rep-dot remaining"></div>
+      </div>
+      <button class="rep-btn looking">+ Read with mushaf</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- From memory -->
+    <div class="rep-type">
+      <div class="rep-type-header">
+        <div class="rep-type-label">
+          <div class="rep-type-icon memory">🧠</div>
+          <div class="rep-type-name">From Memory <span>· without looking</span></div>
+        </div>
+        <div class="rep-count mem">3 <small>/ 8</small></div>
+      </div>
+      <div class="rep-dots">
+        <div class="rep-dot done-mem"></div>
+        <div class="rep-dot done-mem"></div>
+        <div class="rep-dot done-mem"></div>
+        <div class="rep-dot remaining"></div>
+        <div class="rep-dot remaining"></div>
+        <div class="rep-dot remaining"></div>
+        <div class="rep-dot remaining"></div>
+        <div class="rep-dot remaining"></div>
+      </div>
+      <button class="rep-btn memory">+ Recite from memory</button>
+    </div>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="progress-summary">
+    <div class="ps-item">
+      <div class="ps-val look">8</div>
+      <div class="ps-label">With mushaf</div>
+    </div>
+    <div class="ps-item">
+      <div class="ps-val mem">3</div>
+      <div class="ps-label">From memory</div>
+    </div>
+    <div class="ps-item">
+      <div class="ps-val">11</div>
+      <div class="ps-label">Total reps</div>
+    </div>
+    <div class="ps-item">
+      <div class="ps-val" style="color:#f59e0b">9</div>
+      <div class="ps-label">Remaining</div>
+    </div>
+  </div>
+
+  <button class="done-btn">✓ Done with this page</button>
+
+</div>
