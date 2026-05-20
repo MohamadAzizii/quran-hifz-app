@@ -3,18 +3,28 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'KFGQPC Nastaleeq';
-  src: url('/fonts/KFGQPC-Nastaleeq.ttf') format('truetype');
+  font-family: 'KFGQPC HAFS';
+  src: url('/fonts/KFGQPC-HafsUthmanic.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 .quran-text {
-  font-family: 'KFGQPC Nastaleeq', 'Traditional Arabic', serif;
+  font-family: 'KFGQPC HAFS', 'Traditional Arabic', serif;
   font-feature-settings: 'liga' on, 'calt' on, 'kern' on;
   text-align: justify;
   text-align-last: justify;
   text-justify: inter-word;
-  word-spacing: 0.02em;
+  word-spacing: 0.04em;
+}
+
+/* Mushaf-page body: lock to a 15-line frame.
+   --line-h drives both line-height and the 15-line container height,
+   so the page always reserves room for a full mushaf page. */
+.mushaf-page {
+  --line-h: 2.6rem;
+  font-size: 1.5rem;
+  line-height: var(--line-h);
+  min-height: calc(var(--line-h) * 15);
 }

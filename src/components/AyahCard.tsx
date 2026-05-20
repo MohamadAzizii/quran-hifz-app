@@ -96,7 +96,7 @@ export function AyahCard({
       </div>
 
       <div
-        className="quran-text text-3xl leading-[2.4] text-slate-100"
+        className="quran-text mushaf-page text-slate-100"
         dir="rtl"
         lang="ar"
       >
