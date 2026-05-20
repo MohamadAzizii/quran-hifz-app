@@ -133,6 +133,8 @@ export function RevisionSession() {
             ayahs={ayahs}
             pageNumber={currentPage.page_number}
             surahName={currentPage.pages.surah_name}
+            juz={currentPage.pages.juz}
+            hizb={currentPage.pages.hizb}
             defaultHidden={true}
           />
 

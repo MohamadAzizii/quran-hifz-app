@@ -1,11 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital@0;1&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-.quran-text {
-  font-family: 'Amiri Quran', 'Amiri', 'Traditional Arabic', serif;
-  font-feature-settings: 'liga' on, 'calt' on, 'kern' on;
+@font-face {
+  font-family: 'KFGQPC Nastaleeq';
+  src: url('/fonts/KFGQPC-Nastaleeq.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
+.quran-text {
+  font-family: 'KFGQPC Nastaleeq', 'Traditional Arabic', serif;
+  font-feature-settings: 'liga' on, 'calt' on, 'kern' on;
+  text-align: justify;
+  text-align-last: justify;
+  text-justify: inter-word;
+  word-spacing: 0.02em;
+}

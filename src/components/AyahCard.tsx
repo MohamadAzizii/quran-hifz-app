@@ -5,6 +5,8 @@ interface Props {
   ayahs: AyahCache[]
   pageNumber: number
   surahName: string
+  juz?: number
+  hizb?: number
   defaultHidden?: boolean
 }
 
@@ -23,7 +25,14 @@ function verseNumberFromKey(key: string): number {
   return Number(after) || 0
 }
 
-export function AyahCard({ ayahs, pageNumber, surahName, defaultHidden = false }: Props) {
+export function AyahCard({
+  ayahs,
+  pageNumber,
+  surahName,
+  juz,
+  hizb,
+  defaultHidden = false,
+}: Props) {
   const [hidden, setHidden] = useState(defaultHidden)
   const pressTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const [revealProgress, setRevealProgress] = useState(0)
@@ -62,7 +71,7 @@ export function AyahCard({ ayahs, pageNumber, surahName, defaultHidden = false }
           onPointerLeave={cancelPress}
           onPointerCancel={cancelPress}
           role="button"
-          aria-label="Hold to reveal ayah text"
+          aria-label="Hold to reveal page text"
           tabIndex={0}
           className="absolute inset-0 rounded-2xl bg-[#0f1117]/95 flex flex-col items-center justify-center gap-2 cursor-pointer z-10 select-none"
         >
@@ -76,8 +85,18 @@ export function AyahCard({ ayahs, pageNumber, surahName, defaultHidden = false }
           </div>
         </div>
       )}
+
+      <div className="flex justify-between items-center mb-5 text-slate-400 text-sm">
+        <span className="font-semibold text-slate-200">{surahName}</span>
+        <span className="text-xs">
+          {juz != null && <>Juz {juz}</>}
+          {juz != null && hizb != null && ' · '}
+          {hizb != null && <>Hizb {hizb}</>}
+        </span>
+      </div>
+
       <div
-        className="text-right text-3xl leading-[2.6] quran-text text-slate-100"
+        className="quran-text text-3xl leading-[2.4] text-slate-100"
         dir="rtl"
         lang="ar"
       >
@@ -86,10 +105,12 @@ export function AyahCard({ ayahs, pageNumber, surahName, defaultHidden = false }
           return (
             <span key={a.ayah_key}>
               {i > 0 && ' '}
-              <span>{a.text_uthmani}</span>
+              {a.text_uthmani}
+              {' '}
               <span
-                className="inline-flex items-center justify-center w-8 h-8 mx-1 text-sm font-bold text-amber-400 border border-amber-400/50 rounded-full align-middle select-none"
+                className="inline-flex items-center justify-center w-7 h-7 mx-0.5 text-xs font-bold text-amber-400 border border-amber-400/50 rounded-full align-middle select-none"
                 aria-label={`Verse ${verseNum}`}
+                style={{ fontFamily: 'system-ui, sans-serif' }}
               >
                 {toArabicIndic(verseNum)}
               </span>
@@ -97,12 +118,14 @@ export function AyahCard({ ayahs, pageNumber, surahName, defaultHidden = false }
           )
         })}
       </div>
-      <div className="text-xs text-slate-500 mt-3">
-        {surahName} · Page {pageNumber}
+
+      <div className="text-center text-slate-500 text-sm mt-5">
+        {pageNumber}
       </div>
+
       <button
         onClick={() => setHidden((h) => !h)}
-        className="mt-3 w-full bg-[#0f172a] border border-[#334155] text-slate-400 rounded-xl py-2 text-sm font-semibold"
+        className="mt-4 w-full bg-[#0f172a] border border-[#334155] text-slate-400 rounded-xl py-2 text-sm font-semibold"
       >
         {hidden ? 'Reveal text' : 'Hide text (test yourself)'}
       </button>
