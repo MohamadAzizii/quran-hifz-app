@@ -9,6 +9,19 @@ interface Props {
 }
 
 const REVEAL_HOLD_MS = 600
+const ARABIC_INDIC = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩']
+
+function toArabicIndic(n: number): string {
+  return String(n)
+    .split('')
+    .map((d) => ARABIC_INDIC[Number(d)] ?? d)
+    .join('')
+}
+
+function verseNumberFromKey(key: string): number {
+  const after = key.split(':')[1] ?? ''
+  return Number(after) || 0
+}
 
 export function AyahCard({ ayahs, pageNumber, surahName, defaultHidden = false }: Props) {
   const [hidden, setHidden] = useState(defaultHidden)
@@ -64,10 +77,25 @@ export function AyahCard({ ayahs, pageNumber, surahName, defaultHidden = false }
         </div>
       )}
       <div
-        className="text-right text-2xl leading-loose font-arabic text-slate-100"
+        className="text-right text-3xl leading-[2.6] quran-text text-slate-100"
         dir="rtl"
+        lang="ar"
       >
-        {sorted.map((a) => a.text_uthmani).join(' ')}
+        {sorted.map((a, i) => {
+          const verseNum = verseNumberFromKey(a.ayah_key)
+          return (
+            <span key={a.ayah_key}>
+              {i > 0 && ' '}
+              <span>{a.text_uthmani}</span>
+              <span
+                className="inline-flex items-center justify-center w-8 h-8 mx-1 text-sm font-bold text-amber-400 border border-amber-400/50 rounded-full align-middle select-none"
+                aria-label={`Verse ${verseNum}`}
+              >
+                {toArabicIndic(verseNum)}
+              </span>
+            </span>
+          )
+        })}
       </div>
       <div className="text-xs text-slate-500 mt-3">
         {surahName} · Page {pageNumber}
