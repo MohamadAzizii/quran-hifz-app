@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { SURAHS, type SurahRange } from '../lib/surahs'
 import {
   useReplaceLearningWithSurah,
   useUserPagesQuery,
 } from '../hooks/useUserPages'
+import { PageTransition } from '../components/PageTransition'
 
 function pageCount(s: SurahRange): number {
   return s.endPage - s.startPage + 1
@@ -59,6 +61,7 @@ export function SurahPicker() {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[#0f1117] text-white px-4 pt-5 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <button
@@ -79,16 +82,28 @@ export function SurahPicker() {
         className="w-full bg-[#1e293b] border border-[#334155] text-white placeholder-slate-500 rounded-xl px-4 py-3 mb-4 text-sm outline-none focus:border-blue-500"
       />
 
-      <div className="flex flex-col gap-2">
+      <motion.div
+        className="flex flex-col gap-2"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          visible: { transition: { staggerChildren: 0.01, delayChildren: 0.05 } },
+        }}
+      >
         {filtered.length === 0 && (
           <div className="text-slate-500 text-sm text-center py-8">
             No surahs match "{query}".
           </div>
         )}
         {filtered.map((s) => (
-          <button
+          <motion.button
             key={s.number}
             onClick={() => setPendingSurah(s)}
+            variants={{
+              hidden: { opacity: 0, y: 8 },
+              visible: { opacity: 1, y: 0 },
+            }}
+            whileTap={{ scale: 0.97 }}
             className="bg-[#1e293b] hover:bg-[#293548] active:bg-[#293548] transition-colors text-left rounded-xl p-3 flex items-center gap-3"
           >
             <div className="bg-[#0f172a] text-slate-400 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0">
@@ -107,16 +122,25 @@ export function SurahPicker() {
             >
               {s.arabicName}
             </div>
-          </button>
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
 
+      <AnimatePresence>
       {pendingSurah && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
           className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4"
           onClick={() => setPendingSurah(null)}
         >
-          <div
+          <motion.div
+            initial={{ scale: 0.92, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.92, opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
             className="bg-[#1e293b] rounded-2xl p-5 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
           >
@@ -140,9 +164,11 @@ export function SurahPicker() {
                 {replace.isPending ? 'Adding…' : 'Confirm'}
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
+    </PageTransition>
   )
 }

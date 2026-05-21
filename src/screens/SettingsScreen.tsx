@@ -1,6 +1,7 @@
 import { useAuth } from '../hooks/useAuth'
 import { useSettings } from '../hooks/useSettings'
 import { BottomNav } from '../components/BottomNav'
+import { PageTransition } from '../components/PageTransition'
 import type { DailyTarget } from '../types'
 
 const TARGET_LABELS: Record<DailyTarget, string> = {
@@ -73,6 +74,7 @@ export function SettingsScreen() {
   if (!settings) return <div className="min-h-screen bg-[#0f1117]" />
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[#0f1117] text-white pb-24">
       <div className="max-w-lg mx-auto px-4 pt-5">
         <h1 className="text-xl font-bold mb-6">Settings</h1>
@@ -159,5 +161,6 @@ export function SettingsScreen() {
       </div>
       <BottomNav />
     </div>
+    </PageTransition>
   )
 }

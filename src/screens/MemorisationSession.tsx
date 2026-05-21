@@ -9,6 +9,7 @@ import { useSettings } from '../hooks/useSettings'
 import { useAyahCache } from '../hooks/useAyahCache'
 import { useSession } from '../hooks/useSession'
 import { MushafImage } from '../components/MushafImage'
+import { PageTransition } from '../components/PageTransition'
 import { RepCounter } from '../components/RepCounter'
 import { nextPortion } from '../lib/portion'
 
@@ -97,6 +98,7 @@ export function MemorisationSession() {
     : 'No portion remaining'
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[#0f1117] text-white px-4 pt-5 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-5">
         <button
@@ -169,5 +171,6 @@ export function MemorisationSession() {
         </button>
       )}
     </div>
+    </PageTransition>
   )
 }

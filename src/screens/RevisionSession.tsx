@@ -4,6 +4,7 @@ import { useApplyRating } from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
 import { useSession } from '../hooks/useSession'
 import { MushafImage } from '../components/MushafImage'
+import { PageTransition } from '../components/PageTransition'
 import { RatingButtons } from '../components/RatingButtons'
 import { RepCounter } from '../components/RepCounter'
 import type { Rating } from '../types'
@@ -75,6 +76,7 @@ export function RevisionSession() {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[#0f1117] text-white px-4 pt-5 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <button
@@ -186,5 +188,6 @@ export function RevisionSession() {
         </>
       )}
     </div>
+    </PageTransition>
   )
 }

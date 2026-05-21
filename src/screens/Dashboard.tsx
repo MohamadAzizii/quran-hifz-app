@@ -6,6 +6,7 @@ import { useAutoGraduate } from '../hooks/useAutoGraduate'
 import { BottomNav } from '../components/BottomNav'
 import { JuzStrengthMap } from '../components/JuzStrengthMap'
 import { RepStatsCard } from '../components/RepStatsCard'
+import { PageTransition } from '../components/PageTransition'
 import type { DailyTarget } from '../types'
 
 const TARGET_LABELS: Record<DailyTarget, string> = {
@@ -45,6 +46,7 @@ export function Dashboard() {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[#0f1117] text-white pb-24">
       <div className="max-w-lg mx-auto px-4 pt-5">
         <div className="flex justify-between items-center mb-5">
@@ -191,5 +193,6 @@ export function Dashboard() {
       </div>
       <BottomNav />
     </div>
+    </PageTransition>
   )
 }

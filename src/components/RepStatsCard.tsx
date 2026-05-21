@@ -1,5 +1,19 @@
 import { useEffect, useState } from 'react'
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import { useRepStats, type RepWindow } from '../hooks/useRepStats'
+
+function AnimatedNumber({ value }: { value: number }) {
+  const motionValue = useMotionValue(value)
+  const display = useTransform(motionValue, (v) => Math.round(v).toLocaleString())
+  useEffect(() => {
+    const controls = animate(motionValue, value, {
+      duration: 0.6,
+      ease: [0.4, 0, 0.2, 1],
+    })
+    return controls.stop
+  }, [value, motionValue])
+  return <motion.span>{display}</motion.span>
+}
 
 const STORAGE_KEY = 'rep-stats-window'
 
@@ -58,7 +72,7 @@ export function RepStatsCard() {
             Memorisation
           </div>
           <div className="text-3xl font-extrabold text-amber-400 mb-1">
-            {placeholder ?? memorisationTotal.toLocaleString()}
+            {placeholder ?? <AnimatedNumber value={memorisationTotal} />}
           </div>
           <div className="text-[10px] text-slate-500 leading-tight">
             {withMushaf} mushaf · {fromMemory} memory
@@ -69,7 +83,7 @@ export function RepStatsCard() {
             Revision
           </div>
           <div className="text-3xl font-extrabold text-amber-400 mb-1">
-            {placeholder ?? revisionTotal.toLocaleString()}
+            {placeholder ?? <AnimatedNumber value={revisionTotal} />}
           </div>
           <div className="text-[10px] text-slate-500 leading-tight">reps</div>
         </div>

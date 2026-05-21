@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Props {
   pageNumber: number
@@ -55,27 +56,33 @@ export function MushafImage({
 
   return (
     <div className="bg-[#1e293b] rounded-2xl p-4 mb-3 relative">
-      {hidden && (
-        <div
-          onPointerDown={beginPress}
-          onPointerUp={cancelPress}
-          onPointerLeave={cancelPress}
-          onPointerCancel={cancelPress}
-          role="button"
-          aria-label="Hold to reveal mushaf page"
-          tabIndex={0}
-          className="absolute inset-0 rounded-2xl bg-[#0f1117]/[0.98] flex flex-col items-center justify-center gap-2 cursor-pointer z-10 select-none"
-        >
-          <span className="text-slate-500 font-semibold">Page hidden</span>
-          <span className="text-slate-600 text-sm">Press and hold to reveal</span>
-          <div className="w-32 h-1.5 bg-[#1e293b] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-[width] duration-75"
-              style={{ width: `${revealProgress}%` }}
-            />
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {hidden && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.04 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            onPointerDown={beginPress}
+            onPointerUp={cancelPress}
+            onPointerLeave={cancelPress}
+            onPointerCancel={cancelPress}
+            role="button"
+            aria-label="Hold to reveal mushaf page"
+            tabIndex={0}
+            className="absolute inset-0 rounded-2xl bg-[#0f1117]/[0.98] flex flex-col items-center justify-center gap-2 cursor-pointer z-10 select-none"
+          >
+            <span className="text-slate-500 font-semibold">Page hidden</span>
+            <span className="text-slate-600 text-sm">Press and hold to reveal</span>
+            <div className="w-32 h-1.5 bg-[#1e293b] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500 transition-[width] duration-75"
+                style={{ width: `${revealProgress}%` }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex justify-between items-center mb-3 text-slate-400 text-sm">
         <span className="font-semibold text-slate-200">{surahName}</span>

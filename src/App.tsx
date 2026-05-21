@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useAuth } from './hooks/useAuth'
@@ -34,7 +35,16 @@ function AuthedRoutes() {
 
   return (
     <BrowserRouter>
-      <Routes>
+      <AnimatedRoutes />
+    </BrowserRouter>
+  )
+}
+
+function AnimatedRoutes() {
+  const location = useLocation()
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/memorise" element={<MemorisationSession />} />
         <Route path="/pick-surah" element={<SurahPicker />} />
@@ -43,7 +53,7 @@ function AuthedRoutes() {
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </BrowserRouter>
+    </AnimatePresence>
   )
 }
 
