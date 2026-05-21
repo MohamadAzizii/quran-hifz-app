@@ -74,8 +74,8 @@ export function SettingsScreen() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white pb-24">
-      <div className="max-w-lg mx-auto px-4 pt-5">
+    <div className="min-h-screen bg-[#0f1117] text-white pb-24 md:pb-10">
+      <div className="max-w-lg md:max-w-2xl mx-auto px-4 md:px-8 pt-5 md:pt-10">
         <h1 className="text-xl font-bold mb-6">Settings</h1>
 
         <Section title="Memorisation">

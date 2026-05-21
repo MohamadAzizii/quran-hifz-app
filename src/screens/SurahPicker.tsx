@@ -62,7 +62,7 @@ export function SurahPicker() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white px-4 pt-5 pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <button
           onClick={() => navigate('/')}
@@ -83,7 +83,7 @@ export function SurahPicker() {
       />
 
       <motion.div
-        className="flex flex-col gap-2"
+        className="grid grid-cols-1 md:grid-cols-2 gap-2"
         initial="hidden"
         animate="visible"
         variants={{

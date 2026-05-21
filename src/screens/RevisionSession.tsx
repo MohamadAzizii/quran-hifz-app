@@ -77,7 +77,7 @@ export function RevisionSession() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white px-4 pt-5 pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <button
           onClick={() => navigate('/')}

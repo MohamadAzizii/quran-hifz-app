@@ -46,8 +46,8 @@ export function Dashboard() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white pb-24">
-      <div className="max-w-lg mx-auto px-4 pt-5">
+    <div className="min-h-screen bg-[#0f1117] text-white pb-24 md:pb-10">
+      <div className="max-w-lg md:max-w-4xl lg:max-w-5xl mx-auto px-4 md:px-8 pt-5 md:pt-10">
         <div className="flex justify-between items-center mb-5">
           <h1 className="text-xl font-bold">My Hifz</h1>
         </div>

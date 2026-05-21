@@ -12,6 +12,7 @@ import { MyQuran } from './screens/MyQuran'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { SurahPicker } from './screens/SurahPicker'
 import { BottomNav } from './components/BottomNav'
+import { Sidebar } from './components/Sidebar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { queryClient } from './lib/queryClient'
 import { flushQueue } from './lib/offline-queue'
@@ -36,7 +37,10 @@ function AuthedRoutes() {
 
   return (
     <BrowserRouter>
-      <AnimatedRoutes />
+      <Sidebar />
+      <div className="md:pl-60">
+        <AnimatedRoutes />
+      </div>
       <PersistentBottomNav />
     </BrowserRouter>
   )

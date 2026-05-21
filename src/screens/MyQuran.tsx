@@ -99,8 +99,8 @@ export function MyQuran() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white pb-24">
-      <div className="max-w-lg mx-auto px-4 pt-5">
+    <div className="min-h-screen bg-[#0f1117] text-white pb-24 md:pb-10">
+      <div className="max-w-lg md:max-w-5xl lg:max-w-6xl mx-auto px-4 md:px-8 pt-5 md:pt-10">
         <h1 className="text-xl font-bold mb-5">My Quran</h1>
 
         <button
@@ -202,8 +202,7 @@ export function MyQuran() {
         )}
 
         <div
-          className="grid gap-0.5 mb-6"
-          style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}
+          className="grid gap-0.5 mb-6 grid-cols-[repeat(20,minmax(0,1fr))] md:grid-cols-[repeat(30,minmax(0,1fr))] lg:grid-cols-[repeat(34,minmax(0,1fr))]"
         >
           {Array.from({ length: 604 }, (_, i) => i + 1).map((n) => (
             <PageCell
