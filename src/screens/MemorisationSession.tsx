@@ -99,7 +99,7 @@ export function MemorisationSession() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl mx-auto">
+    <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-5">
         <button
           onClick={() => navigate('/')}
@@ -114,62 +114,68 @@ export function MemorisationSession() {
         </div>
       </div>
 
-      <div className="bg-[#1e293b] rounded-xl p-3 mb-3 text-xs text-slate-400">
-        Portion: <span className="text-white font-bold">{portionLabel}</span>
-        {' · '}
-        {portion?.isLastPortion ? 'final portion of page' : 'partial'}
-      </div>
-
-      <MushafImage
-        pageNumber={currentPage.page_number}
-        surahName={currentPage.pages.surah_name}
-        juz={currentPage.pages.juz}
-        hizb={currentPage.pages.hizb}
-        defaultHidden={false}
-      />
-
-      {!sessionStarted ? (
-        <button
-          onClick={handleStart}
-          className="w-full bg-green-700 text-white rounded-2xl py-4 text-base font-bold mb-4"
-        >
-          Start Session
-        </button>
-      ) : (
-        <div className="bg-[#1e293b] rounded-2xl p-4 mb-4">
-          <div className="text-xs uppercase tracking-widest text-slate-500 mb-4">
-            Track Repetitions
-          </div>
-          <RepCounter
-            label="📖 With Mushaf"
-            count={repsWithMushaf}
-            target={mushafTarget}
-            color="blue"
-            onAdd={() => setRepsWithMushaf((r) => r + 1)}
-          />
-          <div className="h-px bg-[#0f172a] my-3" />
-          <RepCounter
-            label="🧠 From Memory"
-            count={repsFromMemory}
-            target={memoryTarget}
-            color="purple"
-            onAdd={() => setRepsFromMemory((r) => r + 1)}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6 lg:items-start">
+        <div className="lg:order-1">
+          <MushafImage
+            pageNumber={currentPage.page_number}
+            surahName={currentPage.pages.surah_name}
+            juz={currentPage.pages.juz}
+            hizb={currentPage.pages.hizb}
+            defaultHidden={false}
           />
         </div>
-      )}
 
-      {sessionStarted && (
-        <button
-          onClick={handleFinishPortion}
-          disabled={
-            advance.isPending ||
-            (repsWithMushaf < mushafTarget && repsFromMemory < memoryTarget)
-          }
-          className="w-full bg-green-700 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
-        >
-          {portion?.isLastPortion ? '✓ Mark page as memorised' : '✓ Mark portion done'}
-        </button>
-      )}
+        <div className="lg:order-2">
+          <div className="bg-[#1e293b] rounded-xl p-3 mb-3 text-xs text-slate-400">
+            Portion: <span className="text-white font-bold">{portionLabel}</span>
+            {' · '}
+            {portion?.isLastPortion ? 'final portion of page' : 'partial'}
+          </div>
+
+          {!sessionStarted ? (
+            <button
+              onClick={handleStart}
+              className="w-full bg-green-700 text-white rounded-2xl py-4 text-base font-bold mb-4"
+            >
+              Start Session
+            </button>
+          ) : (
+            <div className="bg-[#1e293b] rounded-2xl p-4 mb-4">
+              <div className="text-xs uppercase tracking-widest text-slate-500 mb-4">
+                Track Repetitions
+              </div>
+              <RepCounter
+                label="📖 With Mushaf"
+                count={repsWithMushaf}
+                target={mushafTarget}
+                color="blue"
+                onAdd={() => setRepsWithMushaf((r) => r + 1)}
+              />
+              <div className="h-px bg-[#0f172a] my-3" />
+              <RepCounter
+                label="🧠 From Memory"
+                count={repsFromMemory}
+                target={memoryTarget}
+                color="purple"
+                onAdd={() => setRepsFromMemory((r) => r + 1)}
+              />
+            </div>
+          )}
+
+          {sessionStarted && (
+            <button
+              onClick={handleFinishPortion}
+              disabled={
+                advance.isPending ||
+                (repsWithMushaf < mushafTarget && repsFromMemory < memoryTarget)
+              }
+              className="w-full bg-green-700 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
+            >
+              {portion?.isLastPortion ? '✓ Mark page as memorised' : '✓ Mark portion done'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
     </PageTransition>
   )
