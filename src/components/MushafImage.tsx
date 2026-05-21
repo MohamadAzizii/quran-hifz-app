@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 
-type MushafStyle = 'plain' | 'tajweed' | 'tajweed-ornate'
-
 interface Props {
   pageNumber: number
   surahName: string
@@ -11,31 +9,9 @@ interface Props {
 }
 
 const REVEAL_HOLD_MS = 600
-const STYLE_KEY = 'mushaf-style'
 
-const STYLES: { id: MushafStyle; label: string }[] = [
-  { id: 'plain', label: 'Plain' },
-  { id: 'tajweed', label: 'Tajweed' },
-  { id: 'tajweed-ornate', label: 'Ornate' },
-]
-
-function imageUrl(pageNumber: number, style: MushafStyle): string {
-  switch (style) {
-    case 'tajweed':
-      return `https://cdn.jsdelivr.net/gh/QuranHub/quran-pages-images@master/easyquran.com/hafs-tajweed/${pageNumber}.jpg`
-    case 'tajweed-ornate':
-      return `https://cdn.jsdelivr.net/gh/QuranHub/quran-pages-images@master/ayat/tajweed/${pageNumber}.png`
-    case 'plain':
-    default: {
-      const padded = String(pageNumber).padStart(3, '0')
-      return `https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${padded}.png`
-    }
-  }
-}
-
-function loadStyle(): MushafStyle {
-  const v = typeof window !== 'undefined' ? localStorage.getItem(STYLE_KEY) : null
-  return v === 'plain' || v === 'tajweed' || v === 'tajweed-ornate' ? v : 'tajweed'
+function imageUrl(pageNumber: number): string {
+  return `https://cdn.jsdelivr.net/gh/QuranHub/quran-pages-images@master/easyquran.com/hafs-tajweed/${pageNumber}.jpg`
 }
 
 export function MushafImage({
@@ -46,17 +22,15 @@ export function MushafImage({
   defaultHidden = false,
 }: Props) {
   const [hidden, setHidden] = useState(defaultHidden)
-  const [style, setStyle] = useState<MushafStyle>(() => loadStyle())
   const [loaded, setLoaded] = useState(false)
   const [errored, setErrored] = useState(false)
   const pressTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const [revealProgress, setRevealProgress] = useState(0)
 
   useEffect(() => {
-    localStorage.setItem(STYLE_KEY, style)
     setLoaded(false)
     setErrored(false)
-  }, [style, pageNumber])
+  }, [pageNumber])
 
   const beginPress = () => {
     setRevealProgress(0)
@@ -118,12 +92,12 @@ export function MushafImage({
       >
         {errored ? (
           <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm p-4 text-center">
-            Mushaf image unavailable for page {pageNumber} ({style}).
+            Mushaf image unavailable for page {pageNumber}.
           </div>
         ) : (
           <img
-            key={`${style}-${pageNumber}`}
-            src={imageUrl(pageNumber, style)}
+            key={pageNumber}
+            src={imageUrl(pageNumber)}
             alt={`Mushaf page ${pageNumber}`}
             loading="lazy"
             onLoad={() => setLoaded(true)}
@@ -136,25 +110,9 @@ export function MushafImage({
 
       <div className="text-center text-slate-500 text-sm mt-3">{pageNumber}</div>
 
-      <div className="mt-3 flex gap-1 bg-[#0f172a] border border-[#334155] rounded-xl p-1">
-        {STYLES.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setStyle(s.id)}
-            className={`flex-1 text-xs font-semibold rounded-lg py-2 transition-colors ${
-              style === s.id
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
       <button
         onClick={() => setHidden((h) => !h)}
-        className="mt-2 w-full bg-[#0f172a] border border-[#334155] text-slate-400 rounded-xl py-2 text-sm font-semibold"
+        className="mt-3 w-full bg-[#0f172a] border border-[#334155] text-slate-400 rounded-xl py-2 text-sm font-semibold"
       >
         {hidden ? 'Reveal page' : 'Hide page (test yourself)'}
       </button>
