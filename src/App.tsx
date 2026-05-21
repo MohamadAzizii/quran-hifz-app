@@ -9,6 +9,7 @@ import { MemorisationSession } from './screens/MemorisationSession'
 import { RevisionSession } from './screens/RevisionSession'
 import { MyQuran } from './screens/MyQuran'
 import { SettingsScreen } from './screens/SettingsScreen'
+import { SurahPicker } from './screens/SurahPicker'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { queryClient } from './lib/queryClient'
 import { flushQueue } from './lib/offline-queue'
@@ -36,6 +37,7 @@ function AuthedRoutes() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/memorise" element={<MemorisationSession />} />
+        <Route path="/pick-surah" element={<SurahPicker />} />
         <Route path="/revise" element={<RevisionSession />} />
         <Route path="/quran" element={<MyQuran />} />
         <Route path="/settings" element={<SettingsScreen />} />

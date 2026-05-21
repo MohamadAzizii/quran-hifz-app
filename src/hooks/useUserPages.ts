@@ -148,6 +148,98 @@ export function useApplyRating() {
   })
 }
 
+export function useReplaceLearningWithSurah() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { startPage: number; endPage: number }) => {
+      if (!user) throw new Error('not signed in')
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const lo = Math.max(1, Math.min(args.startPage, args.endPage))
+      const hi = Math.min(604, Math.max(args.startPage, args.endPage))
+
+      const { data: existing, error: selErr } = await supabase
+        .from('user_pages')
+        .select('page_number, status')
+        .eq('user_id', user.id)
+      if (selErr) throw selErr
+
+      const blocked = new Set(
+        (existing ?? [])
+          .filter((p) => p.status !== 'learning')
+          .map((p) => p.page_number as number)
+      )
+
+      const pagesToAdd: number[] = []
+      for (let n = lo; n <= hi; n++) {
+        if (!blocked.has(n)) pagesToAdd.push(n)
+      }
+
+      const { error: delErr } = await supabase
+        .from('user_pages')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('status', 'learning')
+      if (delErr) throw delErr
+
+      if (pagesToAdd.length === 0) return 0
+
+      const rows = pagesToAdd.map((n) => ({
+        user_id: user.id,
+        page_number: n,
+        status: 'learning' as PageStatus,
+        strength: 2.5,
+        interval_days: 1,
+        repetitions: 0,
+        next_review_date: today,
+        progress_ayah_key: null,
+      }))
+      const { error: insErr } = await supabase.from('user_pages').insert(rows)
+      if (insErr) throw insErr
+      return rows.length
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['user_pages', user?.id] }),
+  })
+}
+
+export function useBulkMarkMemorised() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { from: number; to: number }) => {
+      if (!user) throw new Error('not signed in')
+      const today = new Date()
+      const lo = Math.max(1, Math.min(args.from, args.to))
+      const hi = Math.min(604, Math.max(args.from, args.to))
+      const SPREAD_DAYS = 14
+      const rows = []
+      for (let page_number = lo; page_number <= hi; page_number++) {
+        const offset = (page_number - lo) % SPREAD_DAYS
+        const reviewDate = new Date(today)
+        reviewDate.setDate(reviewDate.getDate() + offset)
+        rows.push({
+          user_id: user.id,
+          page_number,
+          status: 'memorised' as PageStatus,
+          strength: 3.0,
+          interval_days: SPREAD_DAYS,
+          repetitions: 1,
+          next_review_date: format(reviewDate, 'yyyy-MM-dd'),
+          last_reviewed_at: today.toISOString(),
+          progress_ayah_key: null,
+          graduated_to_recent_at: today.toISOString(),
+        })
+      }
+      const { error } = await supabase
+        .from('user_pages')
+        .upsert(rows, { onConflict: 'user_id,page_number' })
+      if (error) throw error
+      return rows.length
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['user_pages', user?.id] }),
+  })
+}
+
 export function useGraduatePage() {
   const { user } = useAuth()
   const qc = useQueryClient()

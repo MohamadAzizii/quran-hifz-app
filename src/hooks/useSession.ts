@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
+import { queryClient } from '../lib/queryClient'
 import type { SessionType, Rating } from '../types'
 
 export function useSession() {
@@ -73,6 +74,7 @@ export function useSession() {
       .update({ completed_at: new Date().toISOString(), total_pages })
       .eq('id', sessionId)
     setSessionId(null)
+    queryClient.invalidateQueries({ queryKey: ['rep-stats'] })
   }
 
   return { sessionId, startSession, logRating, logMemorisation, completeSession }

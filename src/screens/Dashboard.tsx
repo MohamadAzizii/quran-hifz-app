@@ -5,6 +5,7 @@ import { useSettings } from '../hooks/useSettings'
 import { useAutoGraduate } from '../hooks/useAutoGraduate'
 import { BottomNav } from '../components/BottomNav'
 import { JuzStrengthMap } from '../components/JuzStrengthMap'
+import { RepStatsCard } from '../components/RepStatsCard'
 import type { DailyTarget } from '../types'
 
 const TARGET_LABELS: Record<DailyTarget, string> = {
@@ -68,6 +69,8 @@ export function Dashboard() {
           </div>
         </div>
 
+        <RepStatsCard />
+
         <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
           Daily Target
         </div>
@@ -91,8 +94,8 @@ export function Dashboard() {
         <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
           New Memorisation
         </div>
-        {learningPages.length > 0 ? (
-          <div className="bg-gradient-to-br from-[#052e16] to-[#14532d] border border-green-800 rounded-2xl p-4 mb-5">
+        {learningPages.length > 0 && (
+          <div className="bg-gradient-to-br from-[#052e16] to-[#14532d] border border-green-800 rounded-2xl p-4 mb-3">
             <div className="flex justify-between items-start mb-2">
               <span className="bg-green-700 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
                 Currently Learning
@@ -104,6 +107,11 @@ export function Dashboard() {
             <div className="text-white font-bold text-base mb-1">
               {learningPages[0].pages.surah_name} — Juz {learningPages[0].pages.juz}
             </div>
+            {learningPages.length > 1 && (
+              <div className="text-green-300/80 text-xs mb-1">
+                +{learningPages.length - 1} more {learningPages.length - 1 === 1 ? 'page' : 'pages'} queued
+              </div>
+            )}
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => navigate('/memorise')}
@@ -113,14 +121,13 @@ export function Dashboard() {
               </button>
             </div>
           </div>
-        ) : (
-          <button
-            onClick={() => navigate('/memorise')}
-            className="w-full bg-green-950 border border-dashed border-green-800 text-green-400 rounded-2xl py-4 text-sm font-semibold mb-5"
-          >
-            + Start memorising a new page
-          </button>
         )}
+        <button
+          onClick={() => navigate('/pick-surah')}
+          className="w-full bg-green-950 border border-dashed border-green-800 text-green-400 rounded-2xl py-4 text-sm font-semibold mb-5"
+        >
+          + Pick a surah to memorise
+        </button>
 
         <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
           Today's Revision — {tasks.recentPages.length + tasks.spacedPages.length} pages
