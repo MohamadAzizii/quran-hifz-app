@@ -4,7 +4,6 @@ import {
   useGraduatePage,
   useBulkMarkMemorised,
 } from '../hooks/useUserPages'
-import { BottomNav } from '../components/BottomNav'
 import { PageTransition } from '../components/PageTransition'
 import { SURAHS } from '../lib/surahs'
 import type { PageStatus } from '../types'
@@ -280,7 +279,6 @@ export function MyQuran() {
           </div>
         )}
       </div>
-      <BottomNav />
     </div>
     </PageTransition>
   )

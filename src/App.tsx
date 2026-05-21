@@ -11,6 +11,7 @@ import { RevisionSession } from './screens/RevisionSession'
 import { MyQuran } from './screens/MyQuran'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { SurahPicker } from './screens/SurahPicker'
+import { BottomNav } from './components/BottomNav'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { queryClient } from './lib/queryClient'
 import { flushQueue } from './lib/offline-queue'
@@ -36,8 +37,17 @@ function AuthedRoutes() {
   return (
     <BrowserRouter>
       <AnimatedRoutes />
+      <PersistentBottomNav />
     </BrowserRouter>
   )
+}
+
+const TAB_PATHS = new Set(['/', '/quran', '/settings'])
+
+function PersistentBottomNav() {
+  const location = useLocation()
+  if (!TAB_PATHS.has(location.pathname)) return null
+  return <BottomNav />
 }
 
 function AnimatedRoutes() {

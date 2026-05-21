@@ -3,7 +3,6 @@ import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
 import { useSettings } from '../hooks/useSettings'
 import { useAutoGraduate } from '../hooks/useAutoGraduate'
-import { BottomNav } from '../components/BottomNav'
 import { JuzStrengthMap } from '../components/JuzStrengthMap'
 import { RepStatsCard } from '../components/RepStatsCard'
 import { PageTransition } from '../components/PageTransition'
@@ -191,7 +190,6 @@ export function Dashboard() {
           </button>
         )}
       </div>
-      <BottomNav />
     </div>
     </PageTransition>
   )

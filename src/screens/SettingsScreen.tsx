@@ -1,6 +1,5 @@
 import { useAuth } from '../hooks/useAuth'
 import { useSettings } from '../hooks/useSettings'
-import { BottomNav } from '../components/BottomNav'
 import { PageTransition } from '../components/PageTransition'
 import type { DailyTarget } from '../types'
 
@@ -159,7 +158,6 @@ export function SettingsScreen() {
           Sign out
         </button>
       </div>
-      <BottomNav />
     </div>
     </PageTransition>
   )
