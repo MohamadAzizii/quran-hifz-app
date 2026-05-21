@@ -8,7 +8,7 @@ import {
 import { useSettings } from '../hooks/useSettings'
 import { useAyahCache } from '../hooks/useAyahCache'
 import { useSession } from '../hooks/useSession'
-import { AyahCard } from '../components/AyahCard'
+import { MushafImage } from '../components/MushafImage'
 import { RepCounter } from '../components/RepCounter'
 import { nextPortion } from '../lib/portion'
 
@@ -118,8 +118,7 @@ export function MemorisationSession() {
         {portion?.isLastPortion ? 'final portion of page' : 'partial'}
       </div>
 
-      <AyahCard
-        ayahs={portion?.ayahs ?? []}
+      <MushafImage
         pageNumber={currentPage.page_number}
         surahName={currentPage.pages.surah_name}
         juz={currentPage.pages.juz}
