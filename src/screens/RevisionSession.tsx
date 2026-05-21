@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApplyRating } from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
-import { useAyahCache } from '../hooks/useAyahCache'
 import { useSession } from '../hooks/useSession'
-import { AyahCard } from '../components/AyahCard'
+import { MushafImage } from '../components/MushafImage'
 import { RatingButtons } from '../components/RatingButtons'
 import { RepCounter } from '../components/RepCounter'
 import type { Rating } from '../types'
@@ -28,7 +27,6 @@ export function RevisionSession() {
   const [reps, setReps] = useState(0)
 
   const currentPage = allPages[currentIndex] ?? null
-  const { ayahs } = useAyahCache(currentPage?.page_number ?? null)
   const suggestedReps = rating ? SUGGESTED_REPS[rating] : 0
 
   const startedRef = useRef(false)
@@ -129,8 +127,7 @@ export function RevisionSession() {
             </div>
           </div>
 
-          <AyahCard
-            ayahs={ayahs}
+          <MushafImage
             pageNumber={currentPage.page_number}
             surahName={currentPage.pages.surah_name}
             juz={currentPage.pages.juz}
