@@ -24,10 +24,11 @@ export function RepStatsCard() {
     localStorage.setItem(STORAGE_KEY, windowSel)
   }, [windowSel])
 
-  const total = data?.total ?? 0
   const withMushaf = data?.withMushaf ?? 0
   const fromMemory = data?.fromMemory ?? 0
-  const revision = data?.revision ?? 0
+  const memorisationTotal = withMushaf + fromMemory
+  const revisionTotal = data?.revision ?? 0
+  const placeholder = isLoading ? '…' : null
 
   return (
     <div className="bg-[#1e293b] rounded-2xl p-4 mb-5">
@@ -51,33 +52,26 @@ export function RepStatsCard() {
         ))}
       </div>
 
-      <div className="text-center mb-3">
-        <div className="text-4xl font-extrabold text-amber-400">
-          {isLoading ? '…' : total.toLocaleString()}
-        </div>
-        <div className="text-xs text-slate-500 uppercase tracking-widest mt-1">
-          total reps
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-[#0f172a] rounded-lg py-2">
-          <div className="text-base font-bold text-slate-200">{withMushaf}</div>
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
-            With mushaf
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-[#0f172a] rounded-xl p-3 text-center">
+          <div className="text-[10px] uppercase tracking-widest text-green-400 font-bold mb-1">
+            Memorisation
+          </div>
+          <div className="text-3xl font-extrabold text-amber-400 mb-1">
+            {placeholder ?? memorisationTotal.toLocaleString()}
+          </div>
+          <div className="text-[10px] text-slate-500 leading-tight">
+            {withMushaf} mushaf · {fromMemory} memory
           </div>
         </div>
-        <div className="bg-[#0f172a] rounded-lg py-2">
-          <div className="text-base font-bold text-slate-200">{fromMemory}</div>
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
-            From memory
-          </div>
-        </div>
-        <div className="bg-[#0f172a] rounded-lg py-2">
-          <div className="text-base font-bold text-slate-200">{revision}</div>
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
+        <div className="bg-[#0f172a] rounded-xl p-3 text-center">
+          <div className="text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1">
             Revision
           </div>
+          <div className="text-3xl font-extrabold text-amber-400 mb-1">
+            {placeholder ?? revisionTotal.toLocaleString()}
+          </div>
+          <div className="text-[10px] text-slate-500 leading-tight">reps</div>
         </div>
       </div>
     </div>
