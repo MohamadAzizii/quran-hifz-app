@@ -64,7 +64,7 @@ export function MushafImage({
           role="button"
           aria-label="Hold to reveal mushaf page"
           tabIndex={0}
-          className="absolute inset-0 rounded-2xl bg-[#0f1117]/80 flex flex-col items-center justify-center gap-2 cursor-pointer z-10 select-none"
+          className="absolute inset-0 rounded-2xl bg-[#0f1117]/90 flex flex-col items-center justify-center gap-2 cursor-pointer z-10 select-none"
         >
           <span className="text-slate-500 font-semibold">Page hidden</span>
           <span className="text-slate-600 text-sm">Press and hold to reveal</span>
