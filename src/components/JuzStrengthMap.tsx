@@ -10,10 +10,8 @@ function colorForJuz(pages: UserPageWithMeta[]): string {
     return 'bg-[#0f131b] border border-white/[0.05] text-slate-700'
   if (pages.some((p) => p.status === 'learning')) return 'bg-indigo-500 text-white'
   const avg = pages.reduce((s, p) => s + p.strength, 0) / pages.length
-  if (avg >= 4) return 'bg-green-700 text-white'
   if (avg >= 3) return 'bg-green-500 text-white'
-  if (avg >= 2.5) return 'bg-amber-500 text-white'
-  if (avg >= 1.8) return 'bg-orange-500 text-white'
+  if (avg >= 2) return 'bg-amber-500 text-white'
   return 'bg-red-600 text-white'
 }
 
@@ -45,8 +43,8 @@ export function JuzStrengthMap({ userPages, onJuzClick }: Props) {
       </div>
       <div className="flex gap-3 flex-wrap mt-3">
         {[
-          { color: 'bg-green-500', label: 'Solid' },
-          { color: 'bg-amber-500', label: 'Okay' },
+          { color: 'bg-green-500', label: 'Memorised' },
+          { color: 'bg-amber-500', label: 'Okay / Recent' },
           { color: 'bg-red-600', label: 'Weak' },
           { color: 'bg-indigo-500', label: 'Learning' },
           { color: 'bg-[#0f131b] border border-white/[0.05]', label: 'Not started' },
