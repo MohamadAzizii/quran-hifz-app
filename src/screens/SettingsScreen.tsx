@@ -50,15 +50,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function SettingRow({
   label,
+  hint,
   children,
 }: {
   label: string
+  hint?: string
   children: React.ReactNode
 }) {
   return (
-    <div className="flex justify-between items-center px-4 py-3">
-      <span className="text-sm text-slate-300">{label}</span>
-      {children}
+    <div className="px-4 py-3">
+      <div className="flex justify-between items-center gap-3">
+        <span className="text-sm text-slate-300">{label}</span>
+        {children}
+      </div>
+      {hint && (
+        <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{hint}</p>
+      )}
     </div>
   )
 }
@@ -135,7 +142,10 @@ export function SettingsScreen() {
         </Section>
 
         <Section title="Revision">
-          <SettingRow label="Recent cycle (days)">
+          <SettingRow
+            label="Recent cycle (days)"
+            hint="After you memorise a page it's a 'Recent' page and shows up for revision every day for this many days, to lock it in. After that it graduates to spaced revision (reviewed less and less often as it gets stronger)."
+          >
             <NumberInput
               value={settings.recent_cycle_days}
               onChange={(v) => updateSettings({ recent_cycle_days: v })}

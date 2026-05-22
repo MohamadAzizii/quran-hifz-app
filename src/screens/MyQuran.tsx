@@ -3,11 +3,22 @@ import {
   useUserPagesQuery,
   useGraduatePage,
   useBulkMarkMemorised,
+  useApplyRating,
 } from '../hooks/useUserPages'
+import { usePages } from '../hooks/usePages'
 import { PageTransition } from '../components/PageTransition'
+import { RatingButtons } from '../components/RatingButtons'
 import { SURAHS } from '../lib/surahs'
-import type { PageStatus } from '../types'
+import type { PageStatus, Rating } from '../types'
 import type { UserPageWithMeta } from '../hooks/useUserPages'
+
+function surahForPage(pageNumber: number): string {
+  const matches = SURAHS.filter(
+    (s) => pageNumber >= s.startPage && pageNumber <= s.endPage
+  )
+  if (matches.length === 0) return '—'
+  return matches.map((s) => s.name).join(' · ')
+}
 
 function getPageColor(page: UserPageWithMeta | undefined): string {
   if (!page) return 'bg-[#0f131b] border border-white/[0.05] text-slate-700'
@@ -78,8 +89,10 @@ const JUZ_RANGES: { juz: number; from: number; to: number }[] = [
 
 export function MyQuran() {
   const { data: pages = [] } = useUserPagesQuery()
+  const { data: allPageMeta = [] } = usePages()
   const graduate = useGraduatePage()
   const bulkMark = useBulkMarkMemorised()
+  const applyRating = useApplyRating()
   const [selected, setSelected] = useState<number | null>(null)
   const [bulkOpen, setBulkOpen] = useState(false)
   const [from, setFrom] = useState(1)
@@ -88,7 +101,9 @@ export function MyQuran() {
   const [confirmCount, setConfirmCount] = useState<number | null>(null)
 
   const pageMap = new Map(pages.map((p) => [p.page_number, p]))
+  const metaMap = new Map(allPageMeta.map((p) => [p.page_number, p]))
   const selectedPage = selected ? pageMap.get(selected) : null
+  const selectedMeta = selected ? metaMap.get(selected) : null
 
   const handleBulk = async (lo: number, hi: number) => {
     if (!Number.isFinite(lo) || !Number.isFinite(hi)) return
@@ -236,15 +251,19 @@ export function MyQuran() {
             <div className="flex justify-between items-start mb-3">
               <div>
                 <div className="text-lg font-bold">Page {selected}</div>
+                <div className="text-xs text-slate-400 mt-0.5">
+                  {selectedMeta
+                    ? `${selectedMeta.surah_name} · Juz ${selectedMeta.juz} · Hizb ${selectedMeta.hizb}`
+                    : surahForPage(selected)}
+                </div>
                 {selectedPage ? (
-                  <div className="text-xs text-slate-400 mt-0.5">
-                    {selectedPage.pages.surah_name} · Juz {selectedPage.pages.juz}
-                    <br />
-                    Strength: {selectedPage.strength.toFixed(1)} · Next review:{' '}
-                    {selectedPage.next_review_date}
+                  <div className="text-xs text-slate-500 mt-1">
+                    Status: <span className="capitalize text-slate-300">{selectedPage.status}</span>
+                    {' · '}Strength: {selectedPage.strength.toFixed(1)}
+                    {' · '}Next review: {selectedPage.next_review_date}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500 mt-0.5">Not yet memorised</div>
+                  <div className="text-xs text-slate-500 mt-1">Not started yet</div>
                 )}
               </div>
               <button onClick={() => setSelected(null)} className="text-slate-500 text-sm">
@@ -252,28 +271,52 @@ export function MyQuran() {
               </button>
             </div>
 
-            {selectedPage && (
-              <div>
-                <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
-                  Set Status
+            {selectedPage ? (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
+                    How strong is this page?
+                  </div>
+                  <RatingButtons
+                    selected={null}
+                    onSelect={(r: Rating) =>
+                      applyRating.mutate({ page: selectedPage, rating: r })
+                    }
+                  />
+                  <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">
+                    Rating updates this page's review schedule — weaker pages
+                    come back sooner in revision, stronger pages later.
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  {STATUS_OPTIONS.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => graduate.mutate({ page_number: selected, to: s })}
-                      className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize
-                        ${
-                          selectedPage.status === s
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-[#0f131b] text-slate-400 border border-white/[0.08]'
-                        }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
+                    Set Status
+                  </div>
+                  <div className="flex gap-2">
+                    {STATUS_OPTIONS.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => graduate.mutate({ page_number: selected, to: s })}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize
+                          ${
+                            selectedPage.status === s
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-[#0f131b] text-slate-400 border border-white/[0.08]'
+                          }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+            ) : (
+              <p className="text-xs text-slate-500 leading-relaxed">
+                You haven't started this page. Use the surah picker on the home
+                screen to begin memorising it, or mark a range as already
+                memorised above.
+              </p>
             )}
           </div>
         )}
