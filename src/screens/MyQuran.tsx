@@ -277,21 +277,23 @@ export function MyQuran() {
 
             {selectedPage ? (
               <div className="space-y-4">
-                <div>
-                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
-                    How strong is this page?
+                {selectedPage.status === 'memorised' && (
+                  <div>
+                    <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
+                      How strong is this page?
+                    </div>
+                    <RatingButtons
+                      selected={ratingFromStrength(selectedPage.strength)}
+                      onSelect={(r: Rating) =>
+                        setPageRating.mutate({ page_number: selected, rating: r })
+                      }
+                    />
+                    <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">
+                      Rating updates this page's review schedule — weaker pages
+                      come back sooner in revision, stronger pages later.
+                    </p>
                   </div>
-                  <RatingButtons
-                    selected={ratingFromStrength(selectedPage.strength)}
-                    onSelect={(r: Rating) =>
-                      setPageRating.mutate({ page_number: selected, rating: r })
-                    }
-                  />
-                  <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">
-                    Rating updates this page's review schedule — weaker pages
-                    come back sooner in revision, stronger pages later.
-                  </p>
-                </div>
+                )}
 
                 <div>
                   <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
