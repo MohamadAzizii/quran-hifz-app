@@ -33,6 +33,15 @@ export function MushafImage({
     setErrored(false)
   }, [pageNumber])
 
+  // Cached images can finish loading before React attaches onLoad, leaving
+  // the image stuck at opacity:0 (white). Check completeness on mount.
+  const imgRef = (node: HTMLImageElement | null) => {
+    if (node && node.complete) {
+      if (node.naturalWidth > 0) setLoaded(true)
+      else setErrored(true)
+    }
+  }
+
   const beginPress = () => {
     setRevealProgress(0)
     const startedAt = Date.now()
@@ -83,9 +92,9 @@ export function MushafImage({
         ) : (
           <img
             key={pageNumber}
+            ref={imgRef}
             src={imageUrl(pageNumber)}
             alt={`Mushaf page ${pageNumber}`}
-            loading="lazy"
             onLoad={() => setLoaded(true)}
             onError={() => setErrored(true)}
             className="w-full h-full object-contain"
