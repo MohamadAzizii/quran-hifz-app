@@ -117,17 +117,17 @@ describe('scheduleForStrength', () => {
   it('keeps intervals within sensible per-band ranges', () => {
     for (let page = 1; page <= 604; page++) {
       expect(scheduleForStrength(1.5, page, today).interval_days).toBeGreaterThanOrEqual(2)
-      expect(scheduleForStrength(1.5, page, today).interval_days).toBeLessThanOrEqual(4)
-      expect(scheduleForStrength(2.5, page, today).interval_days).toBeGreaterThanOrEqual(5)
-      expect(scheduleForStrength(2.5, page, today).interval_days).toBeLessThanOrEqual(9)
+      expect(scheduleForStrength(1.5, page, today).interval_days).toBeLessThanOrEqual(8)
+      expect(scheduleForStrength(2.5, page, today).interval_days).toBeGreaterThanOrEqual(7)
+      expect(scheduleForStrength(2.5, page, today).interval_days).toBeLessThanOrEqual(14)
       expect(scheduleForStrength(4.0, page, today).interval_days).toBeGreaterThanOrEqual(14)
-      expect(scheduleForStrength(4.0, page, today).interval_days).toBeLessThanOrEqual(20)
+      expect(scheduleForStrength(4.0, page, today).interval_days).toBeLessThanOrEqual(27)
     }
   })
 
   it('spreads a contiguous batch of same-strength pages across multiple days', () => {
     const dates = new Set(
-      Array.from({ length: 9 }, (_, i) =>
+      Array.from({ length: 8 }, (_, i) =>
         scheduleForStrength(2.5, 100 + i, today).next_review_date
       )
     )

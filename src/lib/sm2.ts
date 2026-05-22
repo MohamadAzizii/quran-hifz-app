@@ -50,13 +50,13 @@ export function scheduleForStrength(
   let window: number
   if (strength >= 3) {
     base = 14
-    window = 7
+    window = 14
   } else if (strength >= 2) {
-    base = 5
-    window = 5
+    base = 7
+    window = 8
   } else {
     base = 2
-    window = 3
+    window = 7
   }
   const interval_days = base + (pageNumber % window)
   const next_review_date = format(addDays(parseISO(today), interval_days), 'yyyy-MM-dd')
