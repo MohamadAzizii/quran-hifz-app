@@ -20,9 +20,11 @@ function surahForPage(pageNumber: number): string {
   return matches.map((s) => s.name).join(' · ')
 }
 
+// Must use the same cutoffs as getPageColor so the selected rating always
+// matches the grid cell's colour (weak→red, okay→amber, strong→green).
 function ratingFromStrength(strength: number): Rating {
   if (strength < 2) return 'weak'
-  if (strength < 3.5) return 'okay'
+  if (strength < 3) return 'okay'
   return 'strong'
 }
 
