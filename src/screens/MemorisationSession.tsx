@@ -11,6 +11,7 @@ import { useSession } from '../hooks/useSession'
 import { MushafImage } from '../components/MushafImage'
 import { PageTransition } from '../components/PageTransition'
 import { RepCounter } from '../components/RepCounter'
+import { useDeviceSettings } from '../hooks/useDeviceSettings'
 import { nextPortion } from '../lib/portion'
 
 export function MemorisationSession() {
@@ -20,6 +21,7 @@ export function MemorisationSession() {
   const advance = useAdvanceProgress()
   const { settings } = useSettings()
   const { startSession, logMemorisation, completeSession } = useSession()
+  const { settings: device } = useDeviceSettings()
 
   const learningPages = pages
     .filter((p) => p.status === 'learning')
@@ -123,7 +125,7 @@ export function MemorisationSession() {
             surahName={currentPage.pages.surah_name}
             juz={currentPage.pages.juz}
             hizb={currentPage.pages.hizb}
-            defaultHidden={false}
+            defaultHidden={device.hideMemorise}
           />
         </div>
 

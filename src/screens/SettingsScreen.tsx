@@ -1,5 +1,6 @@
 import { useAuth } from '../hooks/useAuth'
 import { useSettings } from '../hooks/useSettings'
+import { useDeviceSettings, type MushafStyle } from '../hooks/useDeviceSettings'
 import { PageTransition } from '../components/PageTransition'
 import type { DailyTarget } from '../types'
 
@@ -8,6 +9,30 @@ const TARGET_LABELS: Record<DailyTarget, string> = {
   half: '½ page',
   one: '1 page',
   two: '2 pages',
+}
+
+const MUSHAF_LABELS: Record<MushafStyle, string> = {
+  tajweed: 'Tajweed',
+  plain: 'Plain',
+  ornate: 'Ornate',
+}
+
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-pressed={on}
+      className={`w-10 h-6 rounded-full transition-colors ${
+        on ? 'bg-indigo-500' : 'bg-slate-700'
+      }`}
+    >
+      <div
+        className={`w-4 h-4 rounded-full bg-white m-1 transition-transform ${
+          on ? 'translate-x-4' : ''
+        }`}
+      />
+    </button>
+  )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -69,6 +94,7 @@ function NumberInput({
 export function SettingsScreen() {
   const { signOut } = useAuth()
   const { settings, updateSettings } = useSettings()
+  const { settings: device, update: updateDevice } = useDeviceSettings()
 
   if (!settings) return <div className="min-h-screen bg-[#0b0e14]" />
 
@@ -115,27 +141,69 @@ export function SettingsScreen() {
               onChange={(v) => updateSettings({ recent_cycle_days: v })}
             />
           </SettingRow>
+          <SettingRow label="Suggested reps · Weak">
+            <NumberInput
+              value={device.repsWeak}
+              onChange={(v) => updateDevice({ repsWeak: v })}
+            />
+          </SettingRow>
+          <SettingRow label="Suggested reps · Okay">
+            <NumberInput
+              value={device.repsOkay}
+              onChange={(v) => updateDevice({ repsOkay: v })}
+            />
+          </SettingRow>
+          <SettingRow label="Suggested reps · Strong">
+            <NumberInput
+              value={device.repsStrong}
+              onChange={(v) => updateDevice({ repsStrong: v })}
+            />
+          </SettingRow>
+        </Section>
+
+        <Section title="Display">
+          <SettingRow label="Mushaf style">
+            <select
+              value={device.mushafStyle}
+              onChange={(e) =>
+                updateDevice({ mushafStyle: e.target.value as MushafStyle })
+              }
+              className="bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm"
+            >
+              {(Object.keys(MUSHAF_LABELS) as MushafStyle[]).map((k) => (
+                <option key={k} value={k}>
+                  {MUSHAF_LABELS[k]}
+                </option>
+              ))}
+            </select>
+          </SettingRow>
+        </Section>
+
+        <Section title="Test yourself (start hidden)">
+          <SettingRow label="Hide page in memorisation">
+            <Toggle
+              on={device.hideMemorise}
+              onToggle={() => updateDevice({ hideMemorise: !device.hideMemorise })}
+            />
+          </SettingRow>
+          <SettingRow label="Hide page in revision">
+            <Toggle
+              on={device.hideRevise}
+              onToggle={() => updateDevice({ hideRevise: !device.hideRevise })}
+            />
+          </SettingRow>
         </Section>
 
         <Section title="Notifications">
           <SettingRow label="Daily reminder">
-            <button
-              onClick={() =>
+            <Toggle
+              on={settings.notifications_enabled}
+              onToggle={() =>
                 updateSettings({
                   notifications_enabled: !settings.notifications_enabled,
                 })
               }
-              aria-pressed={settings.notifications_enabled}
-              className={`w-10 h-6 rounded-full transition-colors ${
-                settings.notifications_enabled ? 'bg-indigo-500' : 'bg-slate-700'
-              }`}
-            >
-              <div
-                className={`w-4 h-4 rounded-full bg-white m-1 transition-transform ${
-                  settings.notifications_enabled ? 'translate-x-4' : ''
-                }`}
-              />
-            </button>
+            />
           </SettingRow>
           {settings.notifications_enabled && (
             <SettingRow label="Reminder time">

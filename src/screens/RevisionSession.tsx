@@ -7,16 +7,21 @@ import { MushafImage } from '../components/MushafImage'
 import { PageTransition } from '../components/PageTransition'
 import { RatingButtons } from '../components/RatingButtons'
 import { RepCounter } from '../components/RepCounter'
+import { useDeviceSettings } from '../hooks/useDeviceSettings'
 import type { Rating } from '../types'
 import type { UserPageWithMeta } from '../hooks/useUserPages'
-
-const SUGGESTED_REPS: Record<Rating, number> = { weak: 15, okay: 10, strong: 5 }
 
 export function RevisionSession() {
   const navigate = useNavigate()
   const applyRating = useApplyRating()
   const { tasks } = useTodaysTasks()
   const { startSession, logRating, completeSession } = useSession()
+  const { settings: device } = useDeviceSettings()
+  const suggestedRepsByRating: Record<Rating, number> = {
+    weak: device.repsWeak,
+    okay: device.repsOkay,
+    strong: device.repsStrong,
+  }
 
   const allPages: UserPageWithMeta[] = [
     ...(tasks.recentPages as UserPageWithMeta[]),
@@ -28,7 +33,7 @@ export function RevisionSession() {
   const [reps, setReps] = useState(0)
 
   const currentPage = allPages[currentIndex] ?? null
-  const suggestedReps = rating ? SUGGESTED_REPS[rating] : 0
+  const suggestedReps = rating ? suggestedRepsByRating[rating] : 0
 
   const startedRef = useRef(false)
   useEffect(() => {
@@ -112,7 +117,7 @@ export function RevisionSession() {
               surahName={currentPage.pages.surah_name}
               juz={currentPage.pages.juz}
               hizb={currentPage.pages.hizb}
-              defaultHidden={true}
+              defaultHidden={device.hideRevise}
             />
           </div>
 

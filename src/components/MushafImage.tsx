@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useDeviceSettings, type MushafStyle } from '../hooks/useDeviceSettings'
 
 interface Props {
   pageNumber: number
@@ -11,8 +12,16 @@ interface Props {
 
 const REVEAL_HOLD_MS = 600
 
-function imageUrl(pageNumber: number): string {
-  return `https://cdn.jsdelivr.net/gh/QuranHub/quran-pages-images@master/easyquran.com/hafs-tajweed/${pageNumber}.jpg`
+function imageUrl(pageNumber: number, style: MushafStyle): string {
+  switch (style) {
+    case 'plain':
+      return `https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${String(pageNumber).padStart(3, '0')}.png`
+    case 'ornate':
+      return `https://cdn.jsdelivr.net/gh/QuranHub/quran-pages-images@master/ayat/tajweed/${pageNumber}.png`
+    case 'tajweed':
+    default:
+      return `https://cdn.jsdelivr.net/gh/QuranHub/quran-pages-images@master/easyquran.com/hafs-tajweed/${pageNumber}.jpg`
+  }
 }
 
 export function MushafImage({
@@ -22,6 +31,7 @@ export function MushafImage({
   hizb,
   defaultHidden = false,
 }: Props) {
+  const { settings } = useDeviceSettings()
   const [hidden, setHidden] = useState(defaultHidden)
   const [loaded, setLoaded] = useState(false)
   const [errored, setErrored] = useState(false)
@@ -31,7 +41,7 @@ export function MushafImage({
   useEffect(() => {
     setLoaded(false)
     setErrored(false)
-  }, [pageNumber])
+  }, [pageNumber, settings.mushafStyle])
 
   // Cached images can finish loading before React attaches onLoad, leaving
   // the image stuck at opacity:0 (white). Check completeness on mount.
@@ -91,9 +101,9 @@ export function MushafImage({
           </div>
         ) : (
           <img
-            key={pageNumber}
+            key={`${settings.mushafStyle}-${pageNumber}`}
             ref={imgRef}
-            src={imageUrl(pageNumber)}
+            src={imageUrl(pageNumber, settings.mushafStyle)}
             alt={`Mushaf page ${pageNumber}`}
             onLoad={() => setLoaded(true)}
             onError={() => setErrored(true)}
