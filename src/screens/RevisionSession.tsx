@@ -116,7 +116,7 @@ export function RevisionSession() {
             />
           </div>
 
-          <div className="lg:order-2">
+          <div className="lg:order-2 lg:sticky lg:top-10 lg:self-start">
             <div className="bg-[#151a23] rounded-xl p-3 flex justify-between items-center mb-3">
               <div>
                 <div className="text-base font-bold">Page {currentPage.page_number}</div>

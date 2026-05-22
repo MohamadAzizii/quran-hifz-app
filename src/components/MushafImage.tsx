@@ -55,35 +55,7 @@ export function MushafImage({
   }
 
   return (
-    <div className="bg-[#151a23] rounded-2xl p-4 mb-3 relative">
-      <AnimatePresence>
-        {hidden && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.04 }}
-            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-            onPointerDown={beginPress}
-            onPointerUp={cancelPress}
-            onPointerLeave={cancelPress}
-            onPointerCancel={cancelPress}
-            role="button"
-            aria-label="Hold to reveal mushaf page"
-            tabIndex={0}
-            className="absolute inset-0 rounded-2xl bg-[#0b0e14]/[0.98] flex flex-col items-center justify-center gap-2 cursor-pointer z-10 select-none"
-          >
-            <span className="text-slate-500 font-semibold">Page hidden</span>
-            <span className="text-slate-600 text-sm">Press and hold to reveal</span>
-            <div className="w-32 h-1.5 bg-[#151a23] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-indigo-500 transition-[width] duration-75"
-                style={{ width: `${revealProgress}%` }}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+    <div className="bg-[#151a23] rounded-2xl p-4 mb-3">
       <div className="flex justify-between items-center mb-3 text-slate-400 text-sm">
         <span className="font-semibold text-slate-200">{surahName}</span>
         <span className="text-xs">
@@ -93,8 +65,15 @@ export function MushafImage({
         </span>
       </div>
 
+      <button
+        onClick={() => setHidden((h) => !h)}
+        className="mb-3 w-full bg-[#0f131b] border border-white/[0.08] text-slate-400 rounded-xl py-2 text-sm font-semibold"
+      >
+        {hidden ? 'Reveal page' : 'Hide page (test yourself)'}
+      </button>
+
       <div
-        className="bg-white rounded-lg overflow-hidden mx-auto"
+        className="bg-white rounded-lg overflow-hidden mx-auto relative"
         style={{ aspectRatio: '2 / 3.1', maxWidth: '100%' }}
       >
         {errored ? (
@@ -113,16 +92,37 @@ export function MushafImage({
             style={{ opacity: loaded ? 1 : 0, transition: 'opacity 200ms' }}
           />
         )}
+
+        <AnimatePresence>
+          {hidden && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 1.04 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              onPointerDown={beginPress}
+              onPointerUp={cancelPress}
+              onPointerLeave={cancelPress}
+              onPointerCancel={cancelPress}
+              role="button"
+              aria-label="Hold to reveal mushaf page"
+              tabIndex={0}
+              className="absolute inset-0 bg-[#0b0e14]/[0.98] flex flex-col items-center justify-center gap-2 cursor-pointer z-10 select-none"
+            >
+              <span className="text-slate-500 font-semibold">Page hidden</span>
+              <span className="text-slate-600 text-sm">Press and hold to reveal</span>
+              <div className="w-32 h-1.5 bg-[#151a23] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500 transition-[width] duration-75"
+                  style={{ width: `${revealProgress}%` }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="text-center text-slate-500 text-sm mt-3">{pageNumber}</div>
-
-      <button
-        onClick={() => setHidden((h) => !h)}
-        className="mt-3 w-full bg-[#0f131b] border border-white/[0.08] text-slate-400 rounded-xl py-2 text-sm font-semibold"
-      >
-        {hidden ? 'Reveal page' : 'Hide page (test yourself)'}
-      </button>
     </div>
   )
 }
