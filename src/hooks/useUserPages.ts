@@ -353,6 +353,32 @@ export function useGraduatePage() {
         .eq('page_number', args.page_number)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['user_pages', user?.id] }),
+    onMutate: async (args) => {
+      await qc.cancelQueries({ queryKey: ['user_pages', user?.id] })
+      const prev = qc.getQueryData<UserPageWithMeta[]>(['user_pages', user?.id])
+      const today = format(new Date(), 'yyyy-MM-dd')
+      qc.setQueryData<UserPageWithMeta[]>(['user_pages', user?.id], (old) =>
+        old?.map((p) =>
+          p.page_number === args.page_number
+            ? {
+                ...p,
+                status: args.to,
+                ...(args.to === 'recent'
+                  ? {
+                      graduated_to_recent_at: new Date().toISOString(),
+                      next_review_date: today,
+                      progress_ayah_key: null,
+                    }
+                  : {}),
+              }
+            : p
+        )
+      )
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['user_pages', user?.id], ctx.prev)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['user_pages', user?.id] }),
   })
 }
