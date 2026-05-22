@@ -39,15 +39,15 @@ export function MemorisationSession() {
   const mushafTarget = settings?.memorisation_reps_mushaf ?? 12
   const memoryTarget = settings?.memorisation_reps_memory ?? 8
 
-  if (!settings) return <div className="min-h-screen bg-[#0f1117]" />
+  if (!settings) return <div className="min-h-screen bg-[#0b0e14]" />
 
   if (!currentPage) {
     const nextPageNum = Math.max(0, ...pages.map((p) => p.page_number)) + 1
     return (
-      <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl mx-auto">
+      <div className="min-h-screen bg-[#0b0e14] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl mx-auto">
         <button
           onClick={() => navigate('/')}
-          className="bg-[#1e293b] text-slate-400 rounded-lg px-3 py-2 text-sm mb-5"
+          className="bg-[#151a23] text-slate-400 rounded-lg px-3 py-2 text-sm mb-5"
         >
           ← Back
         </button>
@@ -56,7 +56,7 @@ export function MemorisationSession() {
         <button
           onClick={() => addPage.mutate(nextPageNum)}
           disabled={addPage.isPending}
-          className="w-full bg-green-700 text-white rounded-2xl py-4 text-base font-bold disabled:opacity-50"
+          className="btn-gradient w-full text-white rounded-2xl py-4 text-base font-bold disabled:opacity-50"
         >
           {addPage.isPending ? 'Adding…' : `Start Page ${nextPageNum}`}
         </button>
@@ -101,17 +101,17 @@ export function MemorisationSession() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#0b0e14] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-5">
         <button
           onClick={() => navigate('/')}
-          className="bg-[#1e293b] text-slate-400 rounded-lg px-3 py-2 text-sm"
+          className="bg-[#151a23] text-slate-400 rounded-lg px-3 py-2 text-sm"
           aria-label="Back to dashboard"
         >
           ← Back
         </button>
         <h1 className="text-lg font-bold flex-1">New Memorisation</h1>
-        <div className="bg-[#1e293b] rounded-lg px-3 py-1.5 text-xs text-slate-400 font-semibold">
+        <div className="bg-[#151a23] rounded-lg px-3 py-1.5 text-xs text-slate-400 font-semibold">
           Page {currentPage.page_number}
         </div>
       </div>
@@ -128,7 +128,7 @@ export function MemorisationSession() {
         </div>
 
         <div className="lg:order-2 lg:sticky lg:top-10 lg:self-start">
-          <div className="bg-[#1e293b] rounded-xl p-3 mb-3 text-xs text-slate-400">
+          <div className="bg-[#151a23] rounded-xl p-3 mb-3 text-xs text-slate-400">
             Portion: <span className="text-white font-bold">{portionLabel}</span>
             {' · '}
             {portion?.isLastPortion ? 'final portion of page' : 'partial'}
@@ -137,12 +137,12 @@ export function MemorisationSession() {
           {!sessionStarted ? (
             <button
               onClick={handleStart}
-              className="w-full bg-green-700 text-white rounded-2xl py-4 text-base font-bold mb-4"
+              className="btn-gradient w-full text-white rounded-2xl py-4 text-base font-bold mb-4"
             >
               Start Session
             </button>
           ) : (
-            <div className="bg-[#1e293b] rounded-2xl p-4 mb-4">
+            <div className="bg-[#151a23] rounded-2xl p-4 mb-4">
               <div className="text-xs uppercase tracking-widest text-slate-500 mb-4">
                 Track Repetitions
               </div>
@@ -153,7 +153,7 @@ export function MemorisationSession() {
                 color="blue"
                 onAdd={() => setRepsWithMushaf((r) => r + 1)}
               />
-              <div className="h-px bg-[#0f172a] my-3" />
+              <div className="h-px bg-[#0f131b] my-3" />
               <RepCounter
                 label="🧠 From Memory"
                 count={repsFromMemory}
@@ -171,7 +171,7 @@ export function MemorisationSession() {
                 advance.isPending ||
                 (repsWithMushaf < mushafTarget && repsFromMemory < memoryTarget)
               }
-              className="w-full bg-green-700 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
+              className="btn-gradient w-full text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
             >
               {portion?.isLastPortion ? '✓ Mark page as memorised' : '✓ Mark portion done'}
             </button>

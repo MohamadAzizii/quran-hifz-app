@@ -8,7 +8,7 @@ const links = [
 
 export function BottomNav() {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1e293b] border-t border-slate-700 flex z-50">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#151a23] border-t border-slate-700 flex z-50">
       {links.map((l) => (
         <NavLink
           key={l.to}
@@ -16,7 +16,7 @@ export function BottomNav() {
           end={l.to === '/'}
           className={({ isActive }) =>
             `flex-1 flex flex-col items-center py-3 gap-1 text-xs font-semibold transition-colors
-            ${isActive ? 'text-blue-400' : 'text-slate-500'}`
+            ${isActive ? 'text-indigo-300' : 'text-slate-500'}`
           }
         >
           <span className="text-lg">{l.icon}</span>

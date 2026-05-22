@@ -9,7 +9,7 @@ interface Props {
 export function RepCounter({ label, count, target, color, onAdd }: Props) {
   const dots = Array.from({ length: target }, (_, i) => i)
   const colorMap = {
-    blue: { dot: 'bg-blue-500', btn: 'bg-blue-600 hover:bg-blue-500' },
+    blue: { dot: 'bg-indigo-500', btn: 'bg-indigo-500 hover:bg-indigo-500' },
     purple: { dot: 'bg-purple-500', btn: 'bg-purple-600 hover:bg-purple-500' },
   }
   const c = colorMap[color]

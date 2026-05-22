@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen bg-[#0f1117] text-white flex flex-col items-center justify-center gap-4 px-6">
+        <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-4 px-6">
           <div className="text-4xl">⚠️</div>
           <div className="text-lg font-bold">Something went wrong</div>
           <div className="text-sm text-slate-400 text-center max-w-sm">
@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
               this.setState({ error: null })
               location.reload()
             }}
-            className="bg-blue-600 text-white rounded-xl px-5 py-3 font-semibold"
+            className="bg-indigo-500 text-white rounded-xl px-5 py-3 font-semibold"
           >
             Reload app
           </button>

@@ -45,19 +45,19 @@ export function RepStatsCard() {
   const placeholder = isLoading ? '…' : null
 
   return (
-    <div className="bg-[#1e293b] rounded-2xl p-4 mb-5">
+    <div className="bg-[#151a23] rounded-2xl p-4 mb-5">
       <div className="text-xs uppercase tracking-widest text-slate-500 mb-3">
         Repetitions
       </div>
 
-      <div className="bg-[#0f172a] rounded-xl p-1 flex gap-1 mb-4">
+      <div className="bg-[#0f131b] rounded-xl p-1 flex gap-1 mb-4">
         {OPTIONS.map((o) => (
           <button
             key={o.id}
             onClick={() => setWindowSel(o.id)}
             className={`flex-1 text-xs font-semibold rounded-lg py-2 transition-colors ${
               windowSel === o.id
-                ? 'bg-blue-600 text-white'
+                ? 'bg-indigo-500 text-white'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -67,7 +67,7 @@ export function RepStatsCard() {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-[#0f172a] rounded-xl p-3 text-center">
+        <div className="bg-[#0f131b] rounded-xl p-3 text-center">
           <div className="text-[10px] uppercase tracking-widest text-green-400 font-bold mb-1">
             Memorisation
           </div>
@@ -78,7 +78,7 @@ export function RepStatsCard() {
             {withMushaf} mushaf · {fromMemory} memory
           </div>
         </div>
-        <div className="bg-[#0f172a] rounded-xl p-3 text-center">
+        <div className="bg-[#0f131b] rounded-xl p-3 text-center">
           <div className="text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1">
             Revision
           </div>

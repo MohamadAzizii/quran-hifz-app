@@ -62,11 +62,11 @@ export function SurahPicker() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#0b0e14] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <button
           onClick={() => navigate('/')}
-          className="bg-[#1e293b] text-slate-400 rounded-lg px-3 py-2 text-sm"
+          className="bg-[#151a23] text-slate-400 rounded-lg px-3 py-2 text-sm"
           aria-label="Back to dashboard"
         >
           ← Back
@@ -79,7 +79,7 @@ export function SurahPicker() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search by name or number…"
-        className="w-full bg-[#1e293b] border border-[#334155] text-white placeholder-slate-500 rounded-xl px-4 py-3 mb-4 text-sm outline-none focus:border-blue-500"
+        className="w-full bg-[#151a23] border border-white/[0.08] text-white placeholder-slate-500 rounded-xl px-4 py-3 mb-4 text-sm outline-none focus:border-indigo-500"
       />
 
       <motion.div
@@ -104,9 +104,9 @@ export function SurahPicker() {
               visible: { opacity: 1, y: 0 },
             }}
             whileTap={{ scale: 0.97 }}
-            className="bg-[#1e293b] hover:bg-[#293548] active:bg-[#293548] transition-colors text-left rounded-xl p-3 flex items-center gap-3"
+            className="bg-[#151a23] hover:bg-[#1c2230] active:bg-[#1c2230] transition-colors text-left rounded-xl p-3 flex items-center gap-3"
           >
-            <div className="bg-[#0f172a] text-slate-400 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0">
+            <div className="bg-[#0f131b] text-slate-400 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0">
               {s.number}
             </div>
             <div className="flex-1 min-w-0">
@@ -141,7 +141,7 @@ export function SurahPicker() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.92, opacity: 0 }}
             transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-            className="bg-[#1e293b] rounded-2xl p-5 max-w-sm w-full"
+            className="glass rounded-2xl p-5 max-w-sm w-full glow-indigo"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-base font-bold text-white mb-2">
@@ -152,14 +152,14 @@ export function SurahPicker() {
               <button
                 onClick={() => setPendingSurah(null)}
                 disabled={replace.isPending}
-                className="flex-1 bg-[#0f172a] border border-[#334155] text-slate-400 rounded-xl py-3 font-semibold text-sm disabled:opacity-40"
+                className="flex-1 bg-[#0f131b] border border-white/[0.08] text-slate-400 rounded-xl py-3 font-semibold text-sm disabled:opacity-40"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={replace.isPending}
-                className="flex-1 bg-blue-600 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
+                className="btn-gradient flex-1 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
               >
                 {replace.isPending ? 'Adding…' : 'Confirm'}
               </button>

@@ -65,10 +65,10 @@ export function RevisionSession() {
 
   if (allPages.length === 0) {
     return (
-      <div className="min-h-screen bg-[#0f1117] text-white flex flex-col items-center justify-center gap-4 px-4">
+      <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-4 px-4">
         <div className="text-4xl">🎉</div>
         <div className="text-lg font-bold">No revision due today!</div>
-        <button onClick={() => navigate('/')} className="text-blue-400 text-sm">
+        <button onClick={() => navigate('/')} className="text-indigo-300 text-sm">
           ← Back to dashboard
         </button>
       </div>
@@ -77,11 +77,11 @@ export function RevisionSession() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#0b0e14] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <button
           onClick={() => navigate('/')}
-          className="bg-[#1e293b] text-slate-400 rounded-lg px-3 py-2 text-sm"
+          className="bg-[#151a23] text-slate-400 rounded-lg px-3 py-2 text-sm"
           aria-label="Back to dashboard"
         >
           ← Back
@@ -93,7 +93,7 @@ export function RevisionSession() {
         <span className="text-xs text-slate-500">
           Page {currentIndex + 1} of {allPages.length}
         </span>
-        <div className="flex-1 bg-[#1e293b] rounded-full h-1.5">
+        <div className="flex-1 bg-[#151a23] rounded-full h-1.5">
           <div
             className="bg-purple-500 h-1.5 rounded-full transition-all"
             style={{ width: `${((currentIndex + 1) / allPages.length) * 100}%` }}
@@ -117,7 +117,7 @@ export function RevisionSession() {
           </div>
 
           <div className="lg:order-2">
-            <div className="bg-[#1e293b] rounded-xl p-3 flex justify-between items-center mb-3">
+            <div className="bg-[#151a23] rounded-xl p-3 flex justify-between items-center mb-3">
               <div>
                 <div className="text-base font-bold">Page {currentPage.page_number}</div>
                 <div className="text-xs text-slate-500 mt-0.5">
@@ -154,7 +154,7 @@ export function RevisionSession() {
             </div>
 
             {rating && (
-              <div className="bg-[#1e293b] rounded-2xl p-4 mb-4">
+              <div className="bg-[#151a23] rounded-2xl p-4 mb-4">
                 <div className="flex justify-between items-center mb-3">
                   <div className="text-xs uppercase tracking-widest text-slate-500">
                     Suggested Repetitions
@@ -176,14 +176,14 @@ export function RevisionSession() {
             <div className="flex gap-2">
               <button
                 onClick={handleSkip}
-                className="bg-[#1e293b] border border-slate-700 text-slate-400 rounded-xl px-4 py-3 font-semibold text-sm"
+                className="bg-[#151a23] border border-slate-700 text-slate-400 rounded-xl px-4 py-3 font-semibold text-sm"
               >
                 Skip
               </button>
               <button
                 onClick={handleNext}
                 disabled={!rating}
-                className="flex-1 bg-blue-600 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
+                className="btn-gradient flex-1 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
               >
                 {currentIndex + 1 >= allPages.length ? 'Finish ✓' : 'Next page →'}
               </button>

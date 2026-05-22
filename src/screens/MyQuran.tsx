@@ -10,8 +10,8 @@ import type { PageStatus } from '../types'
 import type { UserPageWithMeta } from '../hooks/useUserPages'
 
 function getPageColor(page: UserPageWithMeta | undefined): string {
-  if (!page) return 'bg-[#0f172a] border border-[#1e293b] text-slate-700'
-  if (page.status === 'learning') return 'bg-blue-600 text-white'
+  if (!page) return 'bg-[#0f131b] border border-white/[0.05] text-slate-700'
+  if (page.status === 'learning') return 'bg-indigo-500 text-white'
   if (page.status === 'recent') return 'bg-amber-500 text-white'
   if (page.strength >= 4) return 'bg-green-700 text-white'
   if (page.strength >= 3) return 'bg-green-500 text-white'
@@ -99,19 +99,19 @@ export function MyQuran() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white pb-24 md:pb-10">
+    <div className="min-h-screen bg-[#0b0e14] text-white pb-24 md:pb-10">
       <div className="max-w-lg md:max-w-5xl lg:max-w-6xl mx-auto px-4 md:px-8 pt-5 md:pt-10">
         <h1 className="text-xl font-bold mb-5">My Quran</h1>
 
         <button
           onClick={() => setBulkOpen((o) => !o)}
-          className="w-full bg-[#1e293b] border border-[#334155] text-slate-200 rounded-xl py-2.5 text-sm font-semibold mb-3"
+          className="w-full bg-[#151a23] border border-white/[0.08] text-slate-200 rounded-xl py-2.5 text-sm font-semibold mb-3"
         >
           {bulkOpen ? '× Close' : '+ Mark range as already memorised'}
         </button>
 
         {bulkOpen && (
-          <div className="bg-[#1e293b] rounded-2xl p-4 mb-4 border border-[#334155]">
+          <div className="bg-[#151a23] rounded-2xl p-4 mb-4 border border-white/[0.08]">
             <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
               Quick: whole juz
             </div>
@@ -121,7 +121,7 @@ export function MyQuran() {
                   key={j.juz}
                   onClick={() => handleBulk(j.from, j.to)}
                   disabled={bulkMark.isPending}
-                  className="bg-[#0f172a] border border-[#334155] text-slate-300 rounded-lg py-1.5 text-xs font-semibold disabled:opacity-50 hover:bg-blue-900"
+                  className="bg-[#0f131b] border border-white/[0.08] text-slate-300 rounded-lg py-1.5 text-xs font-semibold disabled:opacity-50 hover:bg-indigo-900"
                 >
                   {j.juz}
                 </button>
@@ -135,7 +135,7 @@ export function MyQuran() {
               <select
                 value={surahIdx}
                 onChange={(e) => setSurahIdx(Number(e.target.value))}
-                className="flex-1 bg-[#0f172a] border border-[#334155] text-white rounded-lg px-3 py-2 text-sm appearance-none"
+                className="flex-1 bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm appearance-none"
               >
                 {SURAHS.map((s, i) => (
                   <option key={s.number} value={i}>
@@ -165,7 +165,7 @@ export function MyQuran() {
                 max={604}
                 value={from}
                 onChange={(e) => setFrom(Number(e.target.value))}
-                className="flex-1 bg-[#0f172a] border border-[#334155] text-white rounded-lg px-3 py-2 text-sm"
+                className="flex-1 bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm"
                 placeholder="From"
               />
               <span className="text-slate-500 text-sm">→</span>
@@ -175,7 +175,7 @@ export function MyQuran() {
                 max={604}
                 value={to}
                 onChange={(e) => setTo(Number(e.target.value))}
-                className="flex-1 bg-[#0f172a] border border-[#334155] text-white rounded-lg px-3 py-2 text-sm"
+                className="flex-1 bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm"
                 placeholder="To"
               />
             </div>
@@ -221,8 +221,8 @@ export function MyQuran() {
             { color: 'bg-green-500', label: 'Solid' },
             { color: 'bg-amber-500', label: 'Okay' },
             { color: 'bg-red-600', label: 'Weak' },
-            { color: 'bg-blue-600', label: 'Learning' },
-            { color: 'bg-[#0f172a] border border-[#1e293b]', label: 'Not started' },
+            { color: 'bg-indigo-500', label: 'Learning' },
+            { color: 'bg-[#0f131b] border border-white/[0.05]', label: 'Not started' },
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded-sm ${l.color}`} />
@@ -232,7 +232,7 @@ export function MyQuran() {
         </div>
 
         {selected && (
-          <div className="bg-[#1e293b] rounded-2xl p-4 mb-4">
+          <div className="bg-[#151a23] rounded-2xl p-4 mb-4">
             <div className="flex justify-between items-start mb-3">
               <div>
                 <div className="text-lg font-bold">Page {selected}</div>
@@ -265,8 +265,8 @@ export function MyQuran() {
                       className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize
                         ${
                           selectedPage.status === s
-                            ? 'bg-blue-700 text-white'
-                            : 'bg-[#0f172a] text-slate-400 border border-[#334155]'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-[#0f131b] text-slate-400 border border-white/[0.08]'
                         }`}
                     >
                       {s}

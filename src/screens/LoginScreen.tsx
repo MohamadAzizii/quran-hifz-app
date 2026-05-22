@@ -20,7 +20,7 @@ export function LoginScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1117] flex items-center justify-center px-6">
+    <div className="min-h-screen bg-[#0b0e14] flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-bold text-white mb-2">Hifz Companion</h1>
         <p className="text-slate-400 text-sm mb-8">
@@ -33,7 +33,7 @@ export function LoginScreen() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-[#1e293b] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-[#151a23] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="password"
@@ -41,13 +41,13 @@ export function LoginScreen() {
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="bg-[#1e293b] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-[#151a23] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
+            className="bg-indigo-500 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
           >
             {loading ? 'Loading…' : mode === 'signin' ? 'Sign in' : 'Create account'}
           </button>

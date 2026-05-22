@@ -28,7 +28,7 @@ function AuthedRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center text-slate-400">
+      <div className="min-h-screen bg-[#0b0e14] flex items-center justify-center text-slate-400">
         Loading…
       </div>
     )

@@ -16,7 +16,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <div className="text-xs uppercase tracking-widest text-slate-500 mb-3">
         {title}
       </div>
-      <div className="bg-[#1e293b] rounded-2xl divide-y divide-[#334155]">
+      <div className="bg-[#151a23] rounded-2xl divide-y divide-[#334155]">
         {children}
       </div>
     </div>
@@ -49,7 +49,7 @@ function NumberInput({
     <div className="flex items-center gap-2">
       <button
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="bg-[#0f172a] border border-[#334155] text-white w-7 h-7 rounded-lg text-sm font-bold"
+        className="bg-[#0f131b] border border-white/[0.08] text-white w-7 h-7 rounded-lg text-sm font-bold"
         aria-label="Decrease"
       >
         −
@@ -57,7 +57,7 @@ function NumberInput({
       <span className="text-white font-bold w-6 text-center">{value}</span>
       <button
         onClick={() => onChange(value + 1)}
-        className="bg-[#0f172a] border border-[#334155] text-white w-7 h-7 rounded-lg text-sm font-bold"
+        className="bg-[#0f131b] border border-white/[0.08] text-white w-7 h-7 rounded-lg text-sm font-bold"
         aria-label="Increase"
       >
         +
@@ -70,11 +70,11 @@ export function SettingsScreen() {
   const { signOut } = useAuth()
   const { settings, updateSettings } = useSettings()
 
-  if (!settings) return <div className="min-h-screen bg-[#0f1117]" />
+  if (!settings) return <div className="min-h-screen bg-[#0b0e14]" />
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#0f1117] text-white pb-24 md:pb-10">
+    <div className="min-h-screen bg-[#0b0e14] text-white pb-24 md:pb-10">
       <div className="max-w-lg md:max-w-2xl mx-auto px-4 md:px-8 pt-5 md:pt-10">
         <h1 className="text-xl font-bold mb-6">Settings</h1>
 
@@ -85,7 +85,7 @@ export function SettingsScreen() {
               onChange={(e) =>
                 updateSettings({ daily_target: e.target.value as DailyTarget })
               }
-              className="bg-[#0f172a] border border-[#334155] text-white rounded-lg px-3 py-2 text-sm"
+              className="bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm"
             >
               {(Object.keys(TARGET_LABELS) as DailyTarget[]).map((k) => (
                 <option key={k} value={k}>
@@ -127,7 +127,7 @@ export function SettingsScreen() {
               }
               aria-pressed={settings.notifications_enabled}
               className={`w-10 h-6 rounded-full transition-colors ${
-                settings.notifications_enabled ? 'bg-blue-600' : 'bg-slate-700'
+                settings.notifications_enabled ? 'bg-indigo-500' : 'bg-slate-700'
               }`}
             >
               <div
@@ -145,7 +145,7 @@ export function SettingsScreen() {
                 onChange={(e) =>
                   updateSettings({ daily_reminder_time: e.target.value })
                 }
-                className="bg-[#0f172a] border border-[#334155] text-white rounded-lg px-3 py-2 text-sm"
+                className="bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm"
               />
             </SettingRow>
           )}
@@ -153,7 +153,7 @@ export function SettingsScreen() {
 
         <button
           onClick={() => signOut()}
-          className="w-full mt-6 bg-[#1e293b] border border-slate-700 text-slate-400 rounded-xl py-3 text-sm font-semibold"
+          className="w-full mt-6 bg-[#151a23] border border-slate-700 text-slate-400 rounded-xl py-3 text-sm font-semibold"
         >
           Sign out
         </button>
