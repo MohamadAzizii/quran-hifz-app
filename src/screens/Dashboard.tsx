@@ -63,8 +63,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        <RepStatsCard />
-
         <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
           New Memorisation
         </div>
@@ -149,18 +147,20 @@ export function Dashboard() {
           )}
         </div>
 
-        <div className="mb-5">
-          <JuzStrengthMap userPages={pages} />
-        </div>
-
         {(tasks.recentPages.length > 0 || tasks.spacedPages.length > 0) && (
           <button
             onClick={() => navigate('/revise')}
-            className="btn-gradient w-full text-white rounded-2xl py-4 text-base font-bold"
+            className="btn-gradient w-full text-white rounded-2xl py-4 text-base font-bold mb-5"
           >
             Start Today's Revision →
           </button>
         )}
+
+        <div className="mb-5">
+          <JuzStrengthMap userPages={pages} />
+        </div>
+
+        <RepStatsCard />
       </div>
     </div>
     </PageTransition>
