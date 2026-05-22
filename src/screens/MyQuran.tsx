@@ -3,7 +3,7 @@ import {
   useUserPagesQuery,
   useGraduatePage,
   useBulkMarkMemorised,
-  useApplyRating,
+  useSetPageRating,
 } from '../hooks/useUserPages'
 import { usePages } from '../hooks/usePages'
 import { PageTransition } from '../components/PageTransition'
@@ -18,6 +18,12 @@ function surahForPage(pageNumber: number): string {
   )
   if (matches.length === 0) return '—'
   return matches.map((s) => s.name).join(' · ')
+}
+
+function ratingFromStrength(strength: number): Rating {
+  if (strength < 2) return 'weak'
+  if (strength < 3.5) return 'okay'
+  return 'strong'
 }
 
 function getPageColor(page: UserPageWithMeta | undefined): string {
@@ -92,7 +98,7 @@ export function MyQuran() {
   const { data: allPageMeta = [] } = usePages()
   const graduate = useGraduatePage()
   const bulkMark = useBulkMarkMemorised()
-  const applyRating = useApplyRating()
+  const setPageRating = useSetPageRating()
   const [selected, setSelected] = useState<number | null>(null)
   const [bulkOpen, setBulkOpen] = useState(false)
   const [from, setFrom] = useState(1)
@@ -278,9 +284,9 @@ export function MyQuran() {
                     How strong is this page?
                   </div>
                   <RatingButtons
-                    selected={null}
+                    selected={ratingFromStrength(selectedPage.strength)}
                     onSelect={(r: Rating) =>
-                      applyRating.mutate({ page: selectedPage, rating: r })
+                      setPageRating.mutate({ page_number: selected, rating: r })
                     }
                   />
                   <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">

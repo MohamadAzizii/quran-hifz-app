@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { format } from 'date-fns'
+import { addDays, format } from 'date-fns'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
 import { calculateNextReview } from '../lib/sm2'
@@ -261,6 +261,70 @@ export function useBulkMarkMemorised() {
       return rows.length
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['user_pages', user?.id] }),
+  })
+}
+
+// Idempotent manual rating used on the My Quran page. Unlike useApplyRating
+// (which compounds the SM-2 interval each review), this SETS a fixed strength
+// and review interval per rating, so tapping the same option repeatedly is a
+// no-op rather than pushing the next review date further and further out.
+const MANUAL_RATING: Record<
+  Rating,
+  { strength: number; interval_days: number; repetitions: number }
+> = {
+  weak: { strength: 1.5, interval_days: 1, repetitions: 0 },
+  okay: { strength: 2.6, interval_days: 4, repetitions: 1 },
+  strong: { strength: 4.2, interval_days: 14, repetitions: 2 },
+}
+
+export function useSetPageRating() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { page_number: number; rating: Rating }) => {
+      if (!user) throw new Error('not signed in')
+      const today = new Date()
+      const m = MANUAL_RATING[args.rating]
+      const updates = {
+        strength: m.strength,
+        interval_days: m.interval_days,
+        repetitions: m.repetitions,
+        next_review_date: format(addDays(today, m.interval_days), 'yyyy-MM-dd'),
+        last_reviewed_at: today.toISOString(),
+      }
+      const { error } = await supabase
+        .from('user_pages')
+        .update(updates)
+        .eq('user_id', user.id)
+        .eq('page_number', args.page_number)
+      if (error) throw error
+    },
+    onMutate: async (args) => {
+      await qc.cancelQueries({ queryKey: ['user_pages', user?.id] })
+      const prev = qc.getQueryData<UserPageWithMeta[]>(['user_pages', user?.id])
+      const m = MANUAL_RATING[args.rating]
+      qc.setQueryData<UserPageWithMeta[]>(['user_pages', user?.id], (old) =>
+        old?.map((p) =>
+          p.page_number === args.page_number
+            ? {
+                ...p,
+                strength: m.strength,
+                interval_days: m.interval_days,
+                repetitions: m.repetitions,
+                next_review_date: format(
+                  addDays(new Date(), m.interval_days),
+                  'yyyy-MM-dd'
+                ),
+              }
+            : p
+        )
+      )
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['user_pages', user?.id], ctx.prev)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['user_pages', user?.id] }),
   })
 }
 
