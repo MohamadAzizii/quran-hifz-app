@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
 import { calculateNextReview } from '../lib/sm2'
 import { enqueueMutation } from '../lib/offline-queue'
+import { getAyahsForPage } from '../lib/ayah-cache-idb'
 import type { UserPage, PageStatus, Rating, QuranPage } from '../types'
 
 export type UserPageWithMeta = UserPage & {
@@ -152,7 +153,11 @@ export function useReplaceLearningWithSurah() {
   const { user } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (args: { startPage: number; endPage: number }) => {
+    mutationFn: async (args: {
+      surahNumber: number
+      startPage: number
+      endPage: number
+    }) => {
       if (!user) throw new Error('not signed in')
       const today = format(new Date(), 'yyyy-MM-dd')
       const lo = Math.max(1, Math.min(args.startPage, args.endPage))
@@ -175,6 +180,25 @@ export function useReplaceLearningWithSurah() {
         if (!blocked.has(n)) pagesToAdd.push(n)
       }
 
+      // The surah's first page often opens with the tail of the previous
+      // surah. Find the ayah just before this surah begins so memorisation
+      // starts at e.g. 43:1 instead of the leftover 42:52 at the page top.
+      let firstPageProgressKey: string | null = null
+      try {
+        const startAyahs = await getAyahsForPage(lo)
+        const sorted = [...startAyahs].sort(
+          (a, b) => a.ayah_ordinal - b.ayah_ordinal
+        )
+        const surahFirstIdx = sorted.findIndex((a) =>
+          a.ayah_key.startsWith(`${args.surahNumber}:`)
+        )
+        if (surahFirstIdx > 0) {
+          firstPageProgressKey = sorted[surahFirstIdx - 1].ayah_key
+        }
+      } catch {
+        firstPageProgressKey = null
+      }
+
       const { error: delErr } = await supabase
         .from('user_pages')
         .delete()
@@ -192,7 +216,7 @@ export function useReplaceLearningWithSurah() {
         interval_days: 1,
         repetitions: 0,
         next_review_date: today,
-        progress_ayah_key: null,
+        progress_ayah_key: n === lo ? firstPageProgressKey : null,
       }))
       const { error: insErr } = await supabase.from('user_pages').insert(rows)
       if (insErr) throw insErr

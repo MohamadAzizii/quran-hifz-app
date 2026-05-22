@@ -48,6 +48,7 @@ export function SurahPicker() {
   const handleConfirm = async () => {
     if (!pendingSurah) return
     const added = await replace.mutateAsync({
+      surahNumber: pendingSurah.number,
       startPage: pendingSurah.startPage,
       endPage: pendingSurah.endPage,
     })
