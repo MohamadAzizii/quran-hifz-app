@@ -67,4 +67,37 @@ describe('computeTodaysTasks', () => {
     expect(result.spacedPages).toHaveLength(0)
     expect(result.totalDue).toBe(0)
   })
+
+  it('caps total revision (recent + spaced) at the daily limit', () => {
+    const pages = Array.from({ length: 20 }, (_, i) =>
+      makePage({ page_number: i + 1, status: 'memorised', next_review_date: today })
+    )
+    const result = computeTodaysTasks(pages, today, 8)
+    expect(result.recentPages.length + result.spacedPages.length).toBe(8)
+    expect(result.revisionDueTotal).toBe(20)
+  })
+
+  it('counts recent and spaced together against the cap', () => {
+    const pages = [
+      ...Array.from({ length: 5 }, (_, i) =>
+        makePage({ page_number: i + 1, status: 'recent', next_review_date: today })
+      ),
+      ...Array.from({ length: 5 }, (_, i) =>
+        makePage({ page_number: i + 100, status: 'memorised', next_review_date: today })
+      ),
+    ]
+    const result = computeTodaysTasks(pages, today, 8)
+    expect(result.recentPages.length + result.spacedPages.length).toBe(8)
+  })
+
+  it('prioritises the most overdue pages within the cap', () => {
+    const pages = [
+      makePage({ page_number: 1, status: 'memorised', next_review_date: '2026-05-10' }),
+      makePage({ page_number: 2, status: 'memorised', next_review_date: '2026-05-18' }),
+      makePage({ page_number: 3, status: 'memorised', next_review_date: today }),
+    ]
+    const result = computeTodaysTasks(pages, today, 1)
+    expect(result.spacedPages).toHaveLength(1)
+    expect(result.spacedPages[0].page_number).toBe(1)
+  })
 })

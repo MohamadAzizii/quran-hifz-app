@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { computeTodaysTasks } from '../lib/today-tasks'
 import { useUserPagesQuery } from './useUserPages'
+import { useDeviceSettings } from './useDeviceSettings'
 
 function todayString() {
   return format(new Date(), 'yyyy-MM-dd')
@@ -9,6 +10,7 @@ function todayString() {
 
 export function useTodaysTasks() {
   const { data: pages = [], isLoading } = useUserPagesQuery()
+  const { settings: device } = useDeviceSettings()
   const [today, setToday] = useState(todayString)
 
   useEffect(() => {
@@ -25,6 +27,9 @@ export function useTodaysTasks() {
     }
   }, [])
 
-  const tasks = useMemo(() => computeTodaysTasks(pages, today), [pages, today])
+  const tasks = useMemo(
+    () => computeTodaysTasks(pages, today, device.revisionDailyLimit),
+    [pages, today, device.revisionDailyLimit]
+  )
   return { tasks, loading: isLoading, today }
 }

@@ -171,6 +171,15 @@ export function SettingsScreen() {
 
         <Section title="Revision">
           <SettingRow
+            label="Max revision pages / day"
+            hint="Hard cap on how many pages (recent + spaced combined) appear for revision each day, regardless of strength. Anything due beyond this rolls over to the next day."
+          >
+            <NumberInput
+              value={device.revisionDailyLimit}
+              onChange={(v) => updateDevice({ revisionDailyLimit: v })}
+            />
+          </SettingRow>
+          <SettingRow
             label="Recent cycle (days)"
             hint="After you memorise a page it's a 'Recent' page and shows up for revision every day for this many days, to lock it in. After that it graduates to spaced revision (reviewed less and less often as it gets stronger)."
           >

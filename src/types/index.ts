@@ -69,6 +69,7 @@ export interface TodaysTasks {
   recentPages: UserPage[]
   spacedPages: UserPage[]
   totalDue: number
+  revisionDueTotal: number // due recent + spaced before the daily cap is applied
 }
 
 export interface SM2Result {
