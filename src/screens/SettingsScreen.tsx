@@ -1,8 +1,36 @@
+import { useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useSettings } from '../hooks/useSettings'
 import { useDeviceSettings, type MushafStyle } from '../hooks/useDeviceSettings'
 import { PageTransition } from '../components/PageTransition'
 import type { DailyTarget } from '../types'
+
+// Postgres `time` returns "HH:MM:SS"; <input type="time"> needs "HH:MM".
+// Keep a local value so the async save/refetch doesn't fight typing.
+function TimeInput({
+  value,
+  onCommit,
+}: {
+  value: string
+  onCommit: (v: string) => void
+}) {
+  const normalized = (value ?? '').slice(0, 5)
+  const [local, setLocal] = useState(normalized)
+  useEffect(() => {
+    setLocal(normalized)
+  }, [normalized])
+  return (
+    <input
+      type="time"
+      value={local}
+      onChange={(e) => {
+        setLocal(e.target.value)
+        if (e.target.value) onCommit(e.target.value)
+      }}
+      className="bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm [color-scheme:dark]"
+    />
+  )
+}
 
 const TARGET_LABELS: Record<DailyTarget, string> = {
   quarter: '¼ page',
@@ -217,13 +245,9 @@ export function SettingsScreen() {
           </SettingRow>
           {settings.notifications_enabled && (
             <SettingRow label="Reminder time">
-              <input
-                type="time"
+              <TimeInput
                 value={settings.daily_reminder_time}
-                onChange={(e) =>
-                  updateSettings({ daily_reminder_time: e.target.value })
-                }
-                className="bg-[#0f131b] border border-white/[0.08] text-white rounded-lg px-3 py-2 text-sm"
+                onCommit={(v) => updateSettings({ daily_reminder_time: v })}
               />
             </SettingRow>
           )}
