@@ -6,23 +6,13 @@ import { useAutoGraduate } from '../hooks/useAutoGraduate'
 import { JuzStrengthMap } from '../components/JuzStrengthMap'
 import { RepStatsCard } from '../components/RepStatsCard'
 import { PageTransition } from '../components/PageTransition'
-import type { DailyTarget } from '../types'
-
-const TARGET_LABELS: Record<DailyTarget, string> = {
-  quarter: '¼ page',
-  half: '½ page',
-  one: '1 page',
-  two: '2 pages',
-}
-
-const TARGET_OPTIONS: DailyTarget[] = ['quarter', 'half', 'one', 'two']
 
 export function Dashboard() {
   useAutoGraduate()
   const navigate = useNavigate()
   const { data: pages = [], isLoading: pagesLoading } = useUserPagesQuery()
   const { tasks } = useTodaysTasks()
-  const { settings, updateSettings } = useSettings()
+  const { settings } = useSettings()
 
   const memorisedCount = pages.filter(
     (p) => p.status === 'memorised' || p.status === 'recent'
@@ -74,26 +64,6 @@ export function Dashboard() {
         </div>
 
         <RepStatsCard />
-
-        <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
-          Daily Target
-        </div>
-        <div className="bg-[#151a23] rounded-xl p-3 flex gap-2 mb-5">
-          {TARGET_OPTIONS.map((t) => (
-            <button
-              key={t}
-              onClick={() => updateSettings({ daily_target: t })}
-              className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors
-                ${
-                  settings.daily_target === t
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-[#0f131b] text-slate-500 border border-white/[0.08]'
-                }`}
-            >
-              {TARGET_LABELS[t]}
-            </button>
-          ))}
-        </div>
 
         <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
           New Memorisation
