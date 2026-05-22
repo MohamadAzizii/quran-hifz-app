@@ -34,7 +34,9 @@ export function Dashboard() {
   ).size
   const pct = Math.round((memorisedCount / 604) * 100)
 
-  const learningPages = pages.filter((p) => p.status === 'learning')
+  const learningPages = pages
+    .filter((p) => p.status === 'learning')
+    .sort((a, b) => a.page_number - b.page_number)
 
   if (pagesLoading || !settings) {
     return (

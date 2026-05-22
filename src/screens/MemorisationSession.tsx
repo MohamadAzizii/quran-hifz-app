@@ -21,7 +21,9 @@ export function MemorisationSession() {
   const { settings } = useSettings()
   const { startSession, logMemorisation, completeSession } = useSession()
 
-  const learningPages = pages.filter((p) => p.status === 'learning')
+  const learningPages = pages
+    .filter((p) => p.status === 'learning')
+    .sort((a, b) => a.page_number - b.page_number)
   const currentPage = learningPages[0] ?? null
 
   const { ayahs } = useAyahCache(currentPage?.page_number ?? null)
@@ -125,7 +127,7 @@ export function MemorisationSession() {
           />
         </div>
 
-        <div className="lg:order-2">
+        <div className="lg:order-2 lg:sticky lg:top-10 lg:self-start">
           <div className="bg-[#1e293b] rounded-xl p-3 mb-3 text-xs text-slate-400">
             Portion: <span className="text-white font-bold">{portionLabel}</span>
             {' · '}

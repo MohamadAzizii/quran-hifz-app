@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#root {
+  background-color: #0f1117;
+  min-height: 100%;
+}
+
 @font-face {
   font-family: 'KFGQPC HAFS';
   src: url('/fonts/KFGQPC-HafsUthmanic.ttf') format('truetype');
