@@ -305,7 +305,7 @@ export function MyQuran() {
                     {STATUS_OPTIONS.map((s) => (
                       <button
                         key={s}
-                        onClick={() => graduate.mutate({ page_number: selected, to: s })}
+                        onClick={() => graduate.mutate({ page_number: selected, to: s, strength: selectedPage.strength })}
                         className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize
                           ${
                             selectedPage.status === s

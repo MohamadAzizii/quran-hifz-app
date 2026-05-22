@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { addDays, format } from 'date-fns'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
-import { calculateNextReview } from '../lib/sm2'
+import { calculateNextReview, scheduleForStrength } from '../lib/sm2'
 import { enqueueMutation } from '../lib/offline-queue'
 import { getAyahsForPage } from '../lib/ayah-cache-idb'
 import type { UserPage, PageStatus, Rating, QuranPage } from '../types'
@@ -332,7 +332,7 @@ export function useGraduatePage() {
   const { user } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (args: { page_number: number; to: PageStatus }) => {
+    mutationFn: async (args: { page_number: number; to: PageStatus; strength?: number }) => {
       if (!user) throw new Error('not signed in')
       const today = format(new Date(), 'yyyy-MM-dd')
       const updates: Partial<UserPage> = {
@@ -343,6 +343,12 @@ export function useGraduatePage() {
               graduated_to_recent_at: new Date().toISOString(),
               next_review_date: today,
               progress_ayah_key: null,
+            }
+          : {}),
+        ...(args.to === 'memorised'
+          ? {
+              ...scheduleForStrength(args.strength ?? 2.5, args.page_number, today),
+              repetitions: 2,
             }
           : {}),
       }
@@ -368,6 +374,12 @@ export function useGraduatePage() {
                       graduated_to_recent_at: new Date().toISOString(),
                       next_review_date: today,
                       progress_ayah_key: null,
+                    }
+                  : {}),
+                ...(args.to === 'memorised'
+                  ? {
+                      ...scheduleForStrength(args.strength ?? p.strength, args.page_number, today),
+                      repetitions: 2,
                     }
                   : {}),
               }

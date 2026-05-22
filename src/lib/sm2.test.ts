@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateNextReview } from './sm2'
+import { calculateNextReview, scheduleForStrength } from './sm2'
 
 const today = '2026-05-19'
 const basePage = {
@@ -102,5 +102,39 @@ describe('calculateNextReview — regression', () => {
       '2026-05-30'
     )
     expect(result.next_review_date).toBe('2026-06-05')
+  })
+})
+
+describe('scheduleForStrength', () => {
+  it('weaker pages come back sooner than stronger pages', () => {
+    const weak = scheduleForStrength(1.5, 0, today)
+    const okay = scheduleForStrength(2.5, 0, today)
+    const strong = scheduleForStrength(4.0, 0, today)
+    expect(weak.interval_days).toBeLessThan(okay.interval_days)
+    expect(okay.interval_days).toBeLessThan(strong.interval_days)
+  })
+
+  it('keeps intervals within sensible per-band ranges', () => {
+    for (let page = 1; page <= 604; page++) {
+      expect(scheduleForStrength(1.5, page, today).interval_days).toBeGreaterThanOrEqual(2)
+      expect(scheduleForStrength(1.5, page, today).interval_days).toBeLessThanOrEqual(4)
+      expect(scheduleForStrength(2.5, page, today).interval_days).toBeGreaterThanOrEqual(5)
+      expect(scheduleForStrength(2.5, page, today).interval_days).toBeLessThanOrEqual(9)
+      expect(scheduleForStrength(4.0, page, today).interval_days).toBeGreaterThanOrEqual(14)
+      expect(scheduleForStrength(4.0, page, today).interval_days).toBeLessThanOrEqual(20)
+    }
+  })
+
+  it('spreads a contiguous batch of same-strength pages across multiple days', () => {
+    const dates = new Set(
+      Array.from({ length: 9 }, (_, i) =>
+        scheduleForStrength(2.5, 100 + i, today).next_review_date
+      )
+    )
+    expect(dates.size).toBeGreaterThan(1)
+  })
+
+  it('always schedules at least one day out', () => {
+    expect(scheduleForStrength(1.3, 3, today).interval_days).toBeGreaterThanOrEqual(1)
   })
 })
