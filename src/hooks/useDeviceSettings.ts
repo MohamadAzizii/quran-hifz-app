@@ -10,6 +10,7 @@ export interface DeviceSettings {
   repsOkay: number
   repsStrong: number
   revisionDailyLimit: number
+  weakDailyLimit: number
 }
 
 const KEY = 'device-settings'
@@ -22,6 +23,7 @@ const DEFAULTS: DeviceSettings = {
   repsOkay: 10,
   repsStrong: 5,
   revisionDailyLimit: 8,
+  weakDailyLimit: 3,
 }
 
 function load(): DeviceSettings {

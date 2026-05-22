@@ -100,4 +100,56 @@ describe('computeTodaysTasks', () => {
     expect(result.spacedPages).toHaveLength(1)
     expect(result.spacedPages[0].page_number).toBe(1)
   })
+
+  it('limits weak memorised pages and fills the rest with stronger pages', () => {
+    const pages = [
+      ...Array.from({ length: 6 }, (_, i) =>
+        makePage({ page_number: i + 1, status: 'memorised', strength: 1.5, next_review_date: today })
+      ),
+      ...Array.from({ length: 6 }, (_, i) =>
+        makePage({ page_number: i + 100, status: 'memorised', strength: 4, next_review_date: today })
+      ),
+    ]
+    const result = computeTodaysTasks(pages, today, 8, 3)
+    const weakShown = result.spacedPages.filter((p) => p.strength < 2).length
+    expect(weakShown).toBe(3)
+    expect(result.spacedPages).toHaveLength(8)
+  })
+
+  it('always includes every due recent page, then fills the budget with memorised', () => {
+    const pages = [
+      ...Array.from({ length: 5 }, (_, i) =>
+        makePage({ page_number: i + 1, status: 'recent', next_review_date: today })
+      ),
+      ...Array.from({ length: 10 }, (_, i) =>
+        makePage({ page_number: i + 100, status: 'memorised', strength: 2.5, next_review_date: today })
+      ),
+    ]
+    const result = computeTodaysTasks(pages, today, 8, 3)
+    expect(result.recentPages).toHaveLength(5)
+    expect(result.spacedPages).toHaveLength(3) // budget 8 - 5 recent
+    expect(result.revisionDueTotal).toBe(15)
+  })
+
+  it('shows all recent pages even when they exceed the daily limit', () => {
+    const pages = Array.from({ length: 12 }, (_, i) =>
+      makePage({ page_number: i + 1, status: 'recent', next_review_date: today })
+    )
+    const result = computeTodaysTasks(pages, today, 8, 3)
+    expect(result.recentPages).toHaveLength(12)
+    expect(result.spacedPages).toHaveLength(0)
+  })
+
+  it('falls back to fewer weak pages when budget is tight', () => {
+    const pages = [
+      makePage({ page_number: 1, status: 'recent', next_review_date: today }),
+      ...Array.from({ length: 5 }, (_, i) =>
+        makePage({ page_number: i + 100, status: 'memorised', strength: 1.5, next_review_date: today })
+      ),
+    ]
+    const result = computeTodaysTasks(pages, today, 3, 3)
+    // budget 3 - 1 recent = 2 slots, all go to weak (no okay/strong available)
+    expect(result.spacedPages).toHaveLength(2)
+    expect(result.spacedPages.every((p) => p.strength < 2)).toBe(true)
+  })
 })

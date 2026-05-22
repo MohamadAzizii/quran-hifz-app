@@ -172,11 +172,20 @@ export function SettingsScreen() {
         <Section title="Revision">
           <SettingRow
             label="Max revision pages / day"
-            hint="Hard cap on how many pages (recent + spaced combined) appear for revision each day, regardless of strength. Anything due beyond this rolls over to the next day."
+            hint="Target for how many pages appear for revision each day. All due recent-cycle pages always show; the rest of this budget is filled with memorised pages. Anything beyond it rolls over."
           >
             <NumberInput
               value={device.revisionDailyLimit}
               onChange={(v) => updateDevice({ revisionDailyLimit: v })}
+            />
+          </SettingRow>
+          <SettingRow
+            label="Max weak pages / day"
+            hint="Of the memorised pages added to revision, at most this many may be weak (red). The remaining slots are filled with okay/strong pages so a single day isn't all hard pages."
+          >
+            <NumberInput
+              value={device.weakDailyLimit}
+              onChange={(v) => updateDevice({ weakDailyLimit: v })}
             />
           </SettingRow>
           <SettingRow

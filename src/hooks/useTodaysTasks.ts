@@ -28,8 +28,14 @@ export function useTodaysTasks() {
   }, [])
 
   const tasks = useMemo(
-    () => computeTodaysTasks(pages, today, device.revisionDailyLimit),
-    [pages, today, device.revisionDailyLimit]
+    () =>
+      computeTodaysTasks(
+        pages,
+        today,
+        device.revisionDailyLimit,
+        device.weakDailyLimit
+      ),
+    [pages, today, device.revisionDailyLimit, device.weakDailyLimit]
   )
   return { tasks, loading: isLoading, today }
 }
