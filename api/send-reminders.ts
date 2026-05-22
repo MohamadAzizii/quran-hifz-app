@@ -31,6 +31,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const tz = process.env.REMINDER_TIMEZONE ?? 'Europe/London'
+  // On the Vercel Hobby plan the cron can only run once per day, so by
+  // default we send to every enabled user on that single daily run. Set
+  // REMINDER_MATCH_HOUR=true (with a more frequent cron on the Pro plan)
+  // to instead only email users whose reminder hour matches right now.
+  const matchHour = process.env.REMINDER_MATCH_HOUR === 'true'
   const hourNow = Number(
     new Intl.DateTimeFormat('en-GB', {
       timeZone: tz,
@@ -50,6 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (error) return res.status(500).json({ error: error.message })
 
   const due = (settings ?? []).filter((s) => {
+    if (!matchHour) return true
     const t = (s.daily_reminder_time as string | null) ?? ''
     const h = Number(t.split(':')[0])
     return Number.isFinite(h) && h === hourNow
