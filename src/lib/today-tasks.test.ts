@@ -90,15 +90,34 @@ describe('computeTodaysTasks', () => {
     expect(result.recentPages.length + result.spacedPages.length).toBe(8)
   })
 
-  it('prioritises the most overdue pages within the cap', () => {
+  it('always shows carried-over (overdue) memorised pages even when the cap would exclude them', () => {
     const pages = [
       makePage({ page_number: 1, status: 'memorised', next_review_date: '2026-05-10' }),
       makePage({ page_number: 2, status: 'memorised', next_review_date: '2026-05-18' }),
       makePage({ page_number: 3, status: 'memorised', next_review_date: today }),
     ]
+    // Two pages are carried over (before today) — both shown despite limit=1.
+    // The fresh page from today doesn't fit and rolls forward.
     const result = computeTodaysTasks(pages, today, 1)
-    expect(result.spacedPages).toHaveLength(1)
-    expect(result.spacedPages[0].page_number).toBe(1)
+    expect(result.spacedPages).toHaveLength(2)
+    expect(result.spacedPages[0].page_number).toBe(1) // most overdue first
+    expect(result.spacedPages[1].page_number).toBe(2)
+    expect(result.revisionCarriedTotal).toBe(2)
+  })
+
+  it('rolls over a skipped queue: same pages still surface the next day', () => {
+    const pages = [
+      ...Array.from({ length: 8 }, (_, i) =>
+        makePage({ page_number: i + 1, status: 'memorised', strength: 2.5, next_review_date: '2026-05-18' })
+      ),
+      // A new memorised page becomes due today.
+      makePage({ page_number: 100, status: 'memorised', strength: 2.5, next_review_date: today }),
+    ]
+    const result = computeTodaysTasks(pages, today, 8, 3)
+    // All 8 carried-over pages still show; the new fresh page rolls forward.
+    expect(result.spacedPages).toHaveLength(8)
+    expect(result.spacedPages.map((p) => p.page_number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+    expect(result.revisionCarriedTotal).toBe(8)
   })
 
   it('limits weak memorised pages and fills the rest with stronger pages', () => {

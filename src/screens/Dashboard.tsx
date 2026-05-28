@@ -102,6 +102,11 @@ export function Dashboard() {
 
         <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
           Today's Revision — {tasks.recentPages.length + tasks.spacedPages.length} pages
+          {tasks.revisionCarriedTotal > 0 && (
+            <span className="text-amber-400/80 normal-case tracking-normal">
+              {' '}· {tasks.revisionCarriedTotal} carried over
+            </span>
+          )}
           {tasks.revisionDueTotal > tasks.recentPages.length + tasks.spacedPages.length && (
             <span className="text-slate-600 normal-case tracking-normal">
               {' '}· {tasks.revisionDueTotal - (tasks.recentPages.length + tasks.spacedPages.length)} more rolling over
