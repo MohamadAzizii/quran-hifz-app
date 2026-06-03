@@ -41,12 +41,15 @@ export function RecoverySession() {
   const focus = focusRef.current
   const allPages = focus?.sessionPages ?? []
 
-  // Start at the batch position the cursor was at on first mount.
-  const [currentIndex, setCurrentIndex] = useState(
-    () => focusRef.current?.cursorWithinBatch ?? 0
-  )
+  // Local-only counter: how many pages the user has clicked through since this
+  // component mounted. Combined with the snapshotted cursorWithinBatch, that
+  // gives the true position in the batch — robust against the focusRef
+  // populating later than the first useState initializer.
+  const [doneSinceMount, setDoneSinceMount] = useState(0)
   const [reps, setReps] = useState(0)
-  const currentPage = allPages[currentIndex] ?? null
+
+  const batchPosition = (focus?.cursorWithinBatch ?? 0) + doneSinceMount
+  const currentPage = allPages[batchPosition] ?? null
 
   const startedRef = useRef(false)
   useEffect(() => {
@@ -77,26 +80,26 @@ export function RecoverySession() {
     // because the on-mount startSession hadn't resolved yet.
     await startSession('revision')
     await logRevisionReps(currentPage.page_number, reps)
-    const doneCount = currentIndex + 1
-    persistProgress(doneCount)
-    if (doneCount >= allPages.length) {
+    const nextPos = batchPosition + 1
+    persistProgress(nextPos)
+    if (nextPos >= allPages.length) {
       await completeSession(allPages.length)
       navigate('/revise')
       return
     }
-    setCurrentIndex(doneCount)
+    setDoneSinceMount((d) => d + 1)
     setReps(0)
   }
 
   const handleSkip = async () => {
-    const doneCount = currentIndex + 1
-    persistProgress(doneCount)
-    if (doneCount >= allPages.length) {
+    const nextPos = batchPosition + 1
+    persistProgress(nextPos)
+    if (nextPos >= allPages.length) {
       await completeSession(allPages.length)
       navigate('/revise')
       return
     }
-    setCurrentIndex(doneCount)
+    setDoneSinceMount((d) => d + 1)
     setReps(0)
   }
 
@@ -145,18 +148,18 @@ export function RecoverySession() {
 
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xs text-slate-500">
-            Page {currentIndex + 1} of {allPages.length}
+            Page {batchPosition + 1} of {allPages.length}
           </span>
           <div className="flex-1 bg-[#151a23] rounded-full h-1.5">
             <div
               className="bg-purple-500 h-1.5 rounded-full transition-all"
               style={{
-                width: `${((currentIndex + 1) / allPages.length) * 100}%`,
+                width: `${((batchPosition + 1) / allPages.length) * 100}%`,
               }}
             />
           </div>
           <span className="text-xs text-slate-500">
-            {allPages.length - currentIndex - 1} left
+            {allPages.length - batchPosition - 1} left
           </span>
         </div>
 
@@ -218,7 +221,7 @@ export function RecoverySession() {
                   onClick={handleNext}
                   className="btn-gradient flex-1 text-white rounded-xl py-3 font-bold text-sm"
                 >
-                  {currentIndex + 1 >= allPages.length
+                  {batchPosition + 1 >= allPages.length
                     ? 'Finish ✓'
                     : 'Next page →'}
                 </button>
