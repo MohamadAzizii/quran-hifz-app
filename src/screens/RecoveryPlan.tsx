@@ -67,7 +67,7 @@ function Section({
 export function RecoveryPlan() {
   const navigate = useNavigate()
   const { data: pages = [] } = useUserPagesQuery()
-  const { settings: device } = useDeviceSettings()
+  const { settings: device, update: updateDevice } = useDeviceSettings()
   const focus = useMemo(
     () =>
       getCycleFocus(
@@ -136,6 +136,16 @@ export function RecoveryPlan() {
                   ? `Resume at page ${focus.cursorWithinBatch + 1} →`
                   : 'Start today’s 10 pages →'}
             </button>
+            {focus.cursorWithinBatch > 0 && (
+              <button
+                onClick={() =>
+                  updateDevice({ recoveryCursor: focus.batchStart })
+                }
+                className="w-full mt-2 text-xs text-slate-500 hover:text-slate-300 py-1.5"
+              >
+                ↺ Restart this batch from page 1
+              </button>
+            )}
             <p className="text-[10px] text-slate-500 mt-3 leading-relaxed">
               Sequential from Juz 30 downward. Skipping a day leaves the same 10 pages
               waiting tomorrow — the cursor only advances when you finish.
