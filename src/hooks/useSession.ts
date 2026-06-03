@@ -68,6 +68,8 @@ export function useSession() {
   }
 
   // Used by the recovery-plan cycle: log revision reps without a strength rating.
+  // Invalidate rep-stats so the Dashboard counter updates immediately, even if
+  // the user leaves the session before completeSession fires.
   const logRevisionReps = async (page_number: number, reps: number) => {
     if (!sessionId) return
     await supabase.from('session_ratings').insert({
@@ -78,6 +80,7 @@ export function useSession() {
       reps_from_memory: 0,
       reps_revision: reps,
     })
+    queryClient.invalidateQueries({ queryKey: ['rep-stats'] })
   }
 
   const completeSession = async (total_pages: number) => {

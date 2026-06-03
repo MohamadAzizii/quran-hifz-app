@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useSession } from '../hooks/useSession'
@@ -9,32 +9,38 @@ import { RepCounter } from '../components/RepCounter'
 import {
   getCycleFocus,
   advanceCursor,
+  type CycleFocus,
   type UserPageWithJuz,
 } from '../lib/recovery-plan'
 
 const REP_TARGET = 10
 
 // Recovery-plan session: sequential 10-page cycle from Juz 30 top downward.
-// No strength rating — just count reps per page (target 10). On finish, the
-// cursor advances by however many pages were in the session; if it wraps past
-// the end of the cycle, the loop counter bumps and the cycle restarts.
+// No strength rating — just count reps per page (target 10).
+//
+// Cursor advances per page (on Next/Skip), so leaving mid-session and coming
+// back resumes at the next undone page. We snapshot the focus on first mount
+// so the in-progress UI doesn't reshuffle while the cursor moves underneath it.
 export function RecoverySession() {
   const navigate = useNavigate()
   const { data: pages = [] } = useUserPagesQuery()
   const { settings: device, update: updateDevice } = useDeviceSettings()
   const { startSession, logRevisionReps, completeSession } = useSession()
 
-  const focus = useMemo(
-    () =>
-      getCycleFocus(
-        pages as UserPageWithJuz[],
-        device.recoveryCursor,
-        device.recoveryLoops
-      ),
-    [pages, device.recoveryCursor, device.recoveryLoops]
-  )
+  // Snapshot the cycle focus on the first render where pages are loaded.
+  // Subsequent updates to device.recoveryCursor (which we ourselves trigger
+  // as the session progresses) must NOT change the session list.
+  const focusRef = useRef<CycleFocus | null>(null)
+  if (focusRef.current === null && pages.length > 0) {
+    focusRef.current = getCycleFocus(
+      pages as UserPageWithJuz[],
+      device.recoveryCursor,
+      device.recoveryLoops
+    )
+  }
+  const focus = focusRef.current
+  const allPages = focus?.sessionPages ?? []
 
-  const allPages = focus.sessionPages
   const [currentIndex, setCurrentIndex] = useState(0)
   const [reps, setReps] = useState(0)
   const currentPage = allPages[currentIndex] ?? null
@@ -48,39 +54,46 @@ export function RecoverySession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allPages.length])
 
-  const finishAndAdvance = async () => {
-    await completeSession(allPages.length)
+  // After clicking through the i-th page, the cursor should be at
+  // baseCursor + (i+1), wrapping past cycleLength once if needed.
+  const persistProgress = (pagesDoneInSession: number) => {
+    if (!focus) return
     const next = advanceCursor(
       focus.effectiveCursor,
-      allPages.length,
+      pagesDoneInSession,
       focus.cycleLength,
       focus.loops
     )
     updateDevice({ recoveryCursor: next.cursor, recoveryLoops: next.loops })
-    navigate('/revise')
   }
 
   const handleNext = async () => {
     if (!currentPage) return
     await logRevisionReps(currentPage.page_number, reps)
-    if (currentIndex + 1 >= allPages.length) {
-      await finishAndAdvance()
+    const doneCount = currentIndex + 1
+    persistProgress(doneCount)
+    if (doneCount >= allPages.length) {
+      await completeSession(allPages.length)
+      navigate('/revise')
       return
     }
-    setCurrentIndex((i) => i + 1)
+    setCurrentIndex(doneCount)
     setReps(0)
   }
 
-  const handleSkip = () => {
-    if (currentIndex + 1 >= allPages.length) {
-      finishAndAdvance().catch(console.error)
+  const handleSkip = async () => {
+    const doneCount = currentIndex + 1
+    persistProgress(doneCount)
+    if (doneCount >= allPages.length) {
+      await completeSession(allPages.length)
+      navigate('/revise')
       return
     }
-    setCurrentIndex((i) => i + 1)
+    setCurrentIndex(doneCount)
     setReps(0)
   }
 
-  if (allPages.length === 0) {
+  if (!focus || allPages.length === 0) {
     return (
       <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-3 px-6 text-center">
         <div className="text-lg font-bold">No pages in your hifz yet</div>
