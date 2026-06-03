@@ -72,6 +72,10 @@ export function RecoverySession() {
 
   const handleNext = async () => {
     if (!currentPage) return
+    // Idempotent: returns the existing session id, or the in-flight insert
+    // promise, or kicks off a new one. Ensures the log below isn't dropped
+    // because the on-mount startSession hadn't resolved yet.
+    await startSession('revision')
     await logRevisionReps(currentPage.page_number, reps)
     const doneCount = currentIndex + 1
     persistProgress(doneCount)
