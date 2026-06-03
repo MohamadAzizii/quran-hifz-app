@@ -33,11 +33,16 @@ export function getCycleOrderedPages(
 export interface CycleFocus {
   ordered: UserPageWithJuz[]
   sessionPages: UserPageWithJuz[]
-  effectiveCursor: number
+  batchStart: number // index in the cycle where this batch begins (multiple of SESSION_PAGE_LIMIT)
+  cursorWithinBatch: number // how many pages of this batch are already done
   cycleLength: number
   loops: number
 }
 
+// Batches are fixed slices of the cycle ([0..10), [10..20), ...). The cursor
+// determines both which batch the user is in (floor / SESSION_PAGE_LIMIT) and
+// where within it they are. Resuming a session always loads the same batch
+// until it's finished — the in-batch position is what changes.
 export function getCycleFocus(
   pages: UserPageWithJuz[],
   cursor: number,
@@ -48,17 +53,21 @@ export function getCycleFocus(
     return {
       ordered,
       sessionPages: [],
-      effectiveCursor: 0,
+      batchStart: 0,
+      cursorWithinBatch: 0,
       cycleLength: 0,
       loops,
     }
   }
   const effective = ((cursor % ordered.length) + ordered.length) % ordered.length
-  const sessionPages = ordered.slice(effective, effective + SESSION_PAGE_LIMIT)
+  const batchStart =
+    Math.floor(effective / SESSION_PAGE_LIMIT) * SESSION_PAGE_LIMIT
+  const sessionPages = ordered.slice(batchStart, batchStart + SESSION_PAGE_LIMIT)
   return {
     ordered,
     sessionPages,
-    effectiveCursor: effective,
+    batchStart,
+    cursorWithinBatch: effective - batchStart,
     cycleLength: ordered.length,
     loops,
   }

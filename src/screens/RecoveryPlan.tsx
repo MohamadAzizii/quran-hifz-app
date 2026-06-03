@@ -121,7 +121,9 @@ export function RecoveryPlan() {
             <div className="text-xs text-slate-400 mb-4">
               {focus.cycleLength === 0
                 ? 'Add memorised pages via the surah picker to start the cycle.'
-                : `Cycle position ${focus.effectiveCursor + 1}–${focus.effectiveCursor + focus.sessionPages.length} of ${focus.cycleLength}. 10 reps each, out loud.`}
+                : focus.cursorWithinBatch > 0
+                  ? `Cycle ${focus.batchStart + 1}–${focus.batchStart + focus.sessionPages.length} of ${focus.cycleLength}. Resume at page ${focus.cursorWithinBatch + 1} of ${focus.sessionPages.length}.`
+                  : `Cycle ${focus.batchStart + 1}–${focus.batchStart + focus.sessionPages.length} of ${focus.cycleLength}. 10 reps each, out loud.`}
             </div>
             <button
               onClick={() => navigate('/revise/session')}
@@ -130,7 +132,9 @@ export function RecoveryPlan() {
             >
               {focus.sessionPages.length === 0
                 ? 'Add pages first'
-                : 'Start today’s 10 pages →'}
+                : focus.cursorWithinBatch > 0
+                  ? `Resume at page ${focus.cursorWithinBatch + 1} →`
+                  : 'Start today’s 10 pages →'}
             </button>
             <p className="text-[10px] text-slate-500 mt-3 leading-relaxed">
               Sequential from Juz 30 downward. Skipping a day leaves the same 10 pages

@@ -41,7 +41,10 @@ export function RecoverySession() {
   const focus = focusRef.current
   const allPages = focus?.sessionPages ?? []
 
-  const [currentIndex, setCurrentIndex] = useState(0)
+  // Start at the batch position the cursor was at on first mount.
+  const [currentIndex, setCurrentIndex] = useState(
+    () => focusRef.current?.cursorWithinBatch ?? 0
+  )
   const [reps, setReps] = useState(0)
   const currentPage = allPages[currentIndex] ?? null
 
@@ -54,13 +57,13 @@ export function RecoverySession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allPages.length])
 
-  // After clicking through the i-th page, the cursor should be at
-  // baseCursor + (i+1), wrapping past cycleLength once if needed.
-  const persistProgress = (pagesDoneInSession: number) => {
+  // Persist progress to device cursor: batchStart + however many pages of this
+  // batch have been done. advanceCursor handles the wrap+loop-bump for us.
+  const persistProgress = (pagesDoneInBatch: number) => {
     if (!focus) return
     const next = advanceCursor(
-      focus.effectiveCursor,
-      pagesDoneInSession,
+      focus.batchStart,
+      pagesDoneInBatch,
       focus.cycleLength,
       focus.loops
     )
@@ -130,9 +133,8 @@ export function RecoverySession() {
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold truncate">{juzLabel}</h1>
             <div className="text-[10px] uppercase tracking-widest text-purple-300/90">
-              Cycle {focus.effectiveCursor + 1}–
-              {focus.effectiveCursor + allPages.length} of {focus.cycleLength} ·
-              Loops completed {focus.loops}
+              Cycle {focus.batchStart + 1}–{focus.batchStart + allPages.length}{' '}
+              of {focus.cycleLength} · Loops completed {focus.loops}
             </div>
           </div>
         </div>

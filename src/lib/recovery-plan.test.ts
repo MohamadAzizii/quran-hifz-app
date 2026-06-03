@@ -52,7 +52,7 @@ describe('getCycleOrderedPages', () => {
 })
 
 describe('getCycleFocus', () => {
-  it('returns SESSION_PAGE_LIMIT pages from the cursor, starting at Juz 30 top', () => {
+  it('returns the first batch starting at Juz 30 top when cursor is 0', () => {
     const juz30 = Array.from({ length: 23 }, (_, i) =>
       makePage({ page_number: 582 + i, juz: 30 })
     )
@@ -64,18 +64,35 @@ describe('getCycleFocus', () => {
     expect(focus.sessionPages[0].page_number).toBe(582)
     expect(focus.sessionPages[9].page_number).toBe(591)
     expect(focus.cycleLength).toBe(43)
+    expect(focus.batchStart).toBe(0)
+    expect(focus.cursorWithinBatch).toBe(0)
   })
 
-  it('continues sequentially when the cursor advances', () => {
+  it('keeps the same batch when resuming mid-batch, with cursorWithinBatch reflecting progress', () => {
+    const pages = Array.from({ length: 30 }, (_, i) =>
+      makePage({ page_number: 582 + i, juz: 30 })
+    )
+    const focus = getCycleFocus(pages, 3, 0)
+    // Cursor is mid-way through the first batch — still show pages 0..9.
+    expect(focus.sessionPages.map((p) => p.page_number)).toEqual([
+      582, 583, 584, 585, 586, 587, 588, 589, 590, 591,
+    ])
+    expect(focus.batchStart).toBe(0)
+    expect(focus.cursorWithinBatch).toBe(3)
+  })
+
+  it('jumps to the next batch when cursor has crossed the SESSION_PAGE_LIMIT boundary', () => {
     const juz30 = Array.from({ length: 23 }, (_, i) =>
       makePage({ page_number: 582 + i, juz: 30 })
     )
     const focus = getCycleFocus(juz30, 10, 0)
     expect(focus.sessionPages[0].page_number).toBe(592)
     expect(focus.sessionPages[9].page_number).toBe(601)
+    expect(focus.batchStart).toBe(10)
+    expect(focus.cursorWithinBatch).toBe(0)
   })
 
-  it('spans juz boundaries within a session when cursor is near the end of a juz', () => {
+  it('can produce a batch that spans juz boundaries', () => {
     const juz30 = Array.from({ length: 23 }, (_, i) =>
       makePage({ page_number: 582 + i, juz: 30 })
     )
@@ -83,18 +100,21 @@ describe('getCycleFocus', () => {
       makePage({ page_number: 562 + i, juz: 29 })
     )
     const focus = getCycleFocus([...juz29, ...juz30], 20, 0)
-    // 3 pages of Juz 30 (602–604) + 7 pages of Juz 29 (562–568)
+    // Batch [20..29] = last 3 of Juz 30 + first 7 of Juz 29.
     expect(focus.sessionPages.map((p) => p.page_number)).toEqual([
       602, 603, 604, 562, 563, 564, 565, 566, 567, 568,
     ])
+    expect(focus.batchStart).toBe(20)
   })
 
-  it('returns a shorter session at the very end of the cycle without wrapping inside it', () => {
+  it('returns a shorter final batch when the cycle length is not a multiple of 10', () => {
     const pages = Array.from({ length: 12 }, (_, i) =>
       makePage({ page_number: 582 + i, juz: 30 })
     )
-    const focus = getCycleFocus(pages, 8, 0)
-    expect(focus.sessionPages).toHaveLength(4) // pages at indices 8..11
+    const focus = getCycleFocus(pages, 10, 0)
+    expect(focus.sessionPages).toHaveLength(2) // ordered[10..11]
+    expect(focus.batchStart).toBe(10)
+    expect(focus.cursorWithinBatch).toBe(0)
   })
 
   it('clamps an out-of-range cursor into the valid range', () => {
@@ -102,7 +122,8 @@ describe('getCycleFocus', () => {
       makePage({ page_number: 582 + i, juz: 30 })
     )
     const focus = getCycleFocus(pages, 100, 0)
-    expect(focus.effectiveCursor).toBe(0)
+    expect(focus.batchStart).toBe(0)
+    expect(focus.cursorWithinBatch).toBe(0)
   })
 
   it('handles an empty hifz', () => {
