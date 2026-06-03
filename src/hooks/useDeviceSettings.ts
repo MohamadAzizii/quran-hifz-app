@@ -11,6 +11,8 @@ export interface DeviceSettings {
   repsStrong: number
   revisionDailyLimit: number
   weakDailyLimit: number
+  recoveryCursor: number
+  recoveryLoops: number
 }
 
 const KEY = 'device-settings'
@@ -24,6 +26,8 @@ const DEFAULTS: DeviceSettings = {
   repsStrong: 5,
   revisionDailyLimit: 8,
   weakDailyLimit: 3,
+  recoveryCursor: 0,
+  recoveryLoops: 0,
 }
 
 function load(): DeviceSettings {

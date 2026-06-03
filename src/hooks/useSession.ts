@@ -67,6 +67,19 @@ export function useSession() {
     })
   }
 
+  // Used by the recovery-plan cycle: log revision reps without a strength rating.
+  const logRevisionReps = async (page_number: number, reps: number) => {
+    if (!sessionId) return
+    await supabase.from('session_ratings').insert({
+      session_id: sessionId,
+      page_number,
+      rating: null,
+      reps_with_mushaf: 0,
+      reps_from_memory: 0,
+      reps_revision: reps,
+    })
+  }
+
   const completeSession = async (total_pages: number) => {
     if (!sessionId) return
     await supabase
@@ -77,5 +90,12 @@ export function useSession() {
     queryClient.invalidateQueries({ queryKey: ['rep-stats'] })
   }
 
-  return { sessionId, startSession, logRating, logMemorisation, completeSession }
+  return {
+    sessionId,
+    startSession,
+    logRating,
+    logMemorisation,
+    logRevisionReps,
+    completeSession,
+  }
 }

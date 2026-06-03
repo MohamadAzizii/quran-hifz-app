@@ -1,127 +1,131 @@
 import { describe, it, expect } from 'vitest'
-import { getTodaysFocus, SESSION_PAGE_LIMIT, type UserPageWithJuz } from './recovery-plan'
+import {
+  getCycleOrderedPages,
+  getCycleFocus,
+  advanceCursor,
+  SESSION_PAGE_LIMIT,
+  type UserPageWithJuz,
+} from './recovery-plan'
 
-function makePage(
-  overrides: Partial<UserPageWithJuz> & { page_number: number; juz: number }
-): UserPageWithJuz {
-  const { page_number, juz, pages: pagesOverride, ...rest } = overrides
+function makePage(opts: {
+  page_number: number
+  juz: number
+  status?: 'memorised' | 'recent' | 'learning'
+  strength?: number
+}): UserPageWithJuz {
   return {
-    id: String(page_number),
+    id: String(opts.page_number),
     user_id: 'u1',
-    page_number,
-    status: 'memorised',
-    strength: 2.5,
+    page_number: opts.page_number,
+    status: opts.status ?? 'memorised',
+    strength: opts.strength ?? 2.5,
     interval_days: 7,
     repetitions: 3,
     next_review_date: '2026-05-22',
     last_reviewed_at: null,
     progress_ayah_key: null,
     graduated_to_recent_at: null,
-    ...rest,
-    pages: {
-      juz,
-      hizb: 1,
-      surah_name: 'Test',
-      ...pagesOverride,
-    },
+    pages: { juz: opts.juz, hizb: 1, surah_name: `J${opts.juz}` },
   }
 }
 
-// Specific weekdays in 2026:
-const SUNDAY = new Date('2026-05-24T12:00:00Z')
-const MONDAY = new Date('2026-05-25T12:00:00Z')
-const TUESDAY = new Date('2026-05-26T12:00:00Z')
-const WEDNESDAY = new Date('2026-05-27T12:00:00Z')
-const THURSDAY = new Date('2026-05-28T12:00:00Z')
-const FRIDAY = new Date('2026-05-29T12:00:00Z')
-const SATURDAY = new Date('2026-05-30T12:00:00Z')
-
-describe('getTodaysFocus weekday mapping', () => {
-  const pages: UserPageWithJuz[] = [
-    makePage({ page_number: 582, juz: 30 }),
-    makePage({ page_number: 562, juz: 29 }),
-    makePage({ page_number: 542, juz: 28 }),
-    makePage({ page_number: 522, juz: 27 }),
-    makePage({ page_number: 502, juz: 26 }),
-  ]
-
-  it.each([
-    [SATURDAY, 'Juz 30', 30],
-    [SUNDAY, 'Juz 30', 30],
-    [MONDAY, 'Juz 29', 29],
-    [TUESDAY, 'Juz 28', 28],
-    [WEDNESDAY, 'Juz 27', 27],
-    [THURSDAY, 'Juz 26', 26],
-  ])('maps %s to %s', (date, expectedLabel, expectedJuz) => {
-    const focus = getTodaysFocus(pages, date as Date)
-    expect(focus.focusLabel).toBe(expectedLabel)
-    expect(focus.juz).toBe(expectedJuz)
-    expect(focus.sessionPages).toHaveLength(1)
+describe('getCycleOrderedPages', () => {
+  it('orders by juz descending, then page ascending within each juz', () => {
+    const pages = [
+      makePage({ page_number: 564, juz: 29 }),
+      makePage({ page_number: 562, juz: 29 }),
+      makePage({ page_number: 583, juz: 30 }),
+      makePage({ page_number: 582, juz: 30 }),
+    ]
+    const ordered = getCycleOrderedPages(pages)
+    expect(ordered.map((p) => p.page_number)).toEqual([582, 583, 562, 564])
   })
 
-  it('treats Friday as the weak surah day (Yaseen + fragile)', () => {
-    const focus = getTodaysFocus(pages, FRIDAY)
-    expect(focus.focusLabel).toBe('Yaseen + weak surahs')
-    expect(focus.isWeakDay).toBe(true)
+  it('excludes learning pages', () => {
+    const pages = [
+      makePage({ page_number: 582, juz: 30, status: 'learning' }),
+      makePage({ page_number: 583, juz: 30, status: 'memorised' }),
+    ]
+    const ordered = getCycleOrderedPages(pages)
+    expect(ordered.map((p) => p.page_number)).toEqual([583])
   })
 })
 
-describe('getTodaysFocus selection rules', () => {
-  it('only includes memorised or recent pages, skipping learning', () => {
-    const pages: UserPageWithJuz[] = [
-      makePage({ page_number: 582, juz: 30, status: 'memorised' }),
-      makePage({ page_number: 583, juz: 30, status: 'recent' }),
-      makePage({ page_number: 584, juz: 30, status: 'learning' }),
-    ]
-    const focus = getTodaysFocus(pages, SATURDAY)
-    expect(focus.sessionPages.map((p) => p.page_number)).toEqual([582, 583])
-  })
-
-  it('sorts weakest first within a juz', () => {
-    const pages: UserPageWithJuz[] = [
-      makePage({ page_number: 582, juz: 30, strength: 3.5 }),
-      makePage({ page_number: 583, juz: 30, strength: 1.5 }),
-      makePage({ page_number: 584, juz: 30, strength: 2.5 }),
-    ]
-    const focus = getTodaysFocus(pages, SATURDAY)
-    expect(focus.sessionPages.map((p) => p.strength)).toEqual([1.5, 2.5, 3.5])
-  })
-
-  it('caps the session at SESSION_PAGE_LIMIT pages and reports totalAvailable', () => {
-    const pages: UserPageWithJuz[] = Array.from({ length: 18 }, (_, i) =>
-      makePage({ page_number: 580 + i, juz: 30 })
+describe('getCycleFocus', () => {
+  it('returns SESSION_PAGE_LIMIT pages from the cursor, starting at Juz 30 top', () => {
+    const juz30 = Array.from({ length: 23 }, (_, i) =>
+      makePage({ page_number: 582 + i, juz: 30 })
     )
-    const focus = getTodaysFocus(pages, SATURDAY)
+    const juz29 = Array.from({ length: 20 }, (_, i) =>
+      makePage({ page_number: 562 + i, juz: 29 })
+    )
+    const focus = getCycleFocus([...juz29, ...juz30], 0, 0)
     expect(focus.sessionPages).toHaveLength(SESSION_PAGE_LIMIT)
-    expect(focus.totalAvailable).toBe(18)
+    expect(focus.sessionPages[0].page_number).toBe(582)
+    expect(focus.sessionPages[9].page_number).toBe(591)
+    expect(focus.cycleLength).toBe(43)
   })
 
-  it('on Friday combines Yaseen pages and weak pages from elsewhere', () => {
-    const pages: UserPageWithJuz[] = [
-      // Yaseen pages (440-445), strong
-      makePage({ page_number: 440, juz: 22, strength: 4 }),
-      makePage({ page_number: 441, juz: 23, strength: 4 }),
-      // weak pages in unrelated juz
-      makePage({ page_number: 200, juz: 10, strength: 1.4 }),
-      makePage({ page_number: 300, juz: 15, strength: 1.7 }),
-      // strong page (should be excluded — not Yaseen, not weak)
-      makePage({ page_number: 100, juz: 5, strength: 3.5 }),
-    ]
-    const focus = getTodaysFocus(pages, FRIDAY)
-    const numbers = focus.sessionPages.map((p) => p.page_number)
-    expect(numbers).toContain(440)
-    expect(numbers).toContain(441)
-    expect(numbers).toContain(200)
-    expect(numbers).toContain(300)
-    expect(numbers).not.toContain(100)
+  it('continues sequentially when the cursor advances', () => {
+    const juz30 = Array.from({ length: 23 }, (_, i) =>
+      makePage({ page_number: 582 + i, juz: 30 })
+    )
+    const focus = getCycleFocus(juz30, 10, 0)
+    expect(focus.sessionPages[0].page_number).toBe(592)
+    expect(focus.sessionPages[9].page_number).toBe(601)
   })
 
-  it('returns an empty session when no pages match the focus', () => {
-    const pages: UserPageWithJuz[] = [
-      makePage({ page_number: 100, juz: 5 }),
-    ]
-    const focus = getTodaysFocus(pages, SATURDAY)
+  it('spans juz boundaries within a session when cursor is near the end of a juz', () => {
+    const juz30 = Array.from({ length: 23 }, (_, i) =>
+      makePage({ page_number: 582 + i, juz: 30 })
+    )
+    const juz29 = Array.from({ length: 20 }, (_, i) =>
+      makePage({ page_number: 562 + i, juz: 29 })
+    )
+    const focus = getCycleFocus([...juz29, ...juz30], 20, 0)
+    // 3 pages of Juz 30 (602–604) + 7 pages of Juz 29 (562–568)
+    expect(focus.sessionPages.map((p) => p.page_number)).toEqual([
+      602, 603, 604, 562, 563, 564, 565, 566, 567, 568,
+    ])
+  })
+
+  it('returns a shorter session at the very end of the cycle without wrapping inside it', () => {
+    const pages = Array.from({ length: 12 }, (_, i) =>
+      makePage({ page_number: 582 + i, juz: 30 })
+    )
+    const focus = getCycleFocus(pages, 8, 0)
+    expect(focus.sessionPages).toHaveLength(4) // pages at indices 8..11
+  })
+
+  it('clamps an out-of-range cursor into the valid range', () => {
+    const pages = Array.from({ length: 10 }, (_, i) =>
+      makePage({ page_number: 582 + i, juz: 30 })
+    )
+    const focus = getCycleFocus(pages, 100, 0)
+    expect(focus.effectiveCursor).toBe(0)
+  })
+
+  it('handles an empty hifz', () => {
+    const focus = getCycleFocus([], 0, 0)
     expect(focus.sessionPages).toHaveLength(0)
-    expect(focus.totalAvailable).toBe(0)
+    expect(focus.cycleLength).toBe(0)
+  })
+})
+
+describe('advanceCursor', () => {
+  it('advances by the number of pages completed', () => {
+    expect(advanceCursor(0, 10, 50, 0)).toEqual({ cursor: 10, loops: 0 })
+  })
+
+  it('wraps to 0 and increments loops when reaching the end of the cycle', () => {
+    expect(advanceCursor(45, 10, 50, 2)).toEqual({ cursor: 0, loops: 3 })
+  })
+
+  it('wraps when finishing a shorter end-of-cycle session', () => {
+    expect(advanceCursor(48, 2, 50, 0)).toEqual({ cursor: 0, loops: 1 })
+  })
+
+  it('is a no-op when the cycle is empty', () => {
+    expect(advanceCursor(0, 0, 0, 5)).toEqual({ cursor: 0, loops: 5 })
   })
 })

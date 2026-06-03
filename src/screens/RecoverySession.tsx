@@ -1,44 +1,43 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApplyRating, useUserPagesQuery } from '../hooks/useUserPages'
+import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useSession } from '../hooks/useSession'
 import { useDeviceSettings } from '../hooks/useDeviceSettings'
 import { MushafImage } from '../components/MushafImage'
 import { PageTransition } from '../components/PageTransition'
-import { RatingButtons } from '../components/RatingButtons'
 import { RepCounter } from '../components/RepCounter'
-import { getTodaysFocus, type UserPageWithJuz } from '../lib/recovery-plan'
-import type { Rating } from '../types'
+import {
+  getCycleFocus,
+  advanceCursor,
+  type UserPageWithJuz,
+} from '../lib/recovery-plan'
 
-// Mirror of RevisionSession, but the page set comes from today's recovery-plan
-// focus (juz of the day, or Yaseen + weak on Fridays) instead of useTodaysTasks.
-// Ratings still flow through useApplyRating, so strength + next_review_date
-// updates exactly as they did before.
+const REP_TARGET = 10
+
+// Recovery-plan session: sequential 10-page cycle from Juz 30 top downward.
+// No strength rating — just count reps per page (target 10). On finish, the
+// cursor advances by however many pages were in the session; if it wraps past
+// the end of the cycle, the loop counter bumps and the cycle restarts.
 export function RecoverySession() {
   const navigate = useNavigate()
-  const applyRating = useApplyRating()
   const { data: pages = [] } = useUserPagesQuery()
-  const { startSession, logRating, completeSession } = useSession()
-  const { settings: device } = useDeviceSettings()
+  const { settings: device, update: updateDevice } = useDeviceSettings()
+  const { startSession, logRevisionReps, completeSession } = useSession()
 
   const focus = useMemo(
-    () => getTodaysFocus(pages as UserPageWithJuz[]),
-    [pages]
+    () =>
+      getCycleFocus(
+        pages as UserPageWithJuz[],
+        device.recoveryCursor,
+        device.recoveryLoops
+      ),
+    [pages, device.recoveryCursor, device.recoveryLoops]
   )
 
-  const suggestedRepsByRating: Record<Rating, number> = {
-    weak: device.repsWeak,
-    okay: device.repsOkay,
-    strong: device.repsStrong,
-  }
-
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [rating, setRating] = useState<Rating | null>(null)
-  const [reps, setReps] = useState(0)
-
   const allPages = focus.sessionPages
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [reps, setReps] = useState(0)
   const currentPage = allPages[currentIndex] ?? null
-  const suggestedReps = rating ? suggestedRepsByRating[rating] : 0
 
   const startedRef = useRef(false)
   useEffect(() => {
@@ -49,41 +48,45 @@ export function RecoverySession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allPages.length])
 
-  const handleNext = async () => {
-    if (!currentPage || !rating) return
-    await logRating(currentPage.page_number, rating, { reps_revision: reps })
-    await applyRating.mutateAsync({ page: currentPage, rating })
+  const finishAndAdvance = async () => {
+    await completeSession(allPages.length)
+    const next = advanceCursor(
+      focus.effectiveCursor,
+      allPages.length,
+      focus.cycleLength,
+      focus.loops
+    )
+    updateDevice({ recoveryCursor: next.cursor, recoveryLoops: next.loops })
+    navigate('/revise')
+  }
 
+  const handleNext = async () => {
+    if (!currentPage) return
+    await logRevisionReps(currentPage.page_number, reps)
     if (currentIndex + 1 >= allPages.length) {
-      await completeSession(allPages.length)
-      navigate('/revise')
+      await finishAndAdvance()
       return
     }
     setCurrentIndex((i) => i + 1)
-    setRating(null)
     setReps(0)
   }
 
   const handleSkip = () => {
     if (currentIndex + 1 >= allPages.length) {
-      navigate('/revise')
+      finishAndAdvance().catch(console.error)
       return
     }
     setCurrentIndex((i) => i + 1)
-    setRating(null)
     setReps(0)
   }
 
   if (allPages.length === 0) {
     return (
       <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <div className="text-xs uppercase tracking-widest text-amber-400/80">
-          {focus.dayName} · {focus.focusLabel}
-        </div>
-        <div className="text-lg font-bold">Nothing in your hifz for today's focus yet</div>
+        <div className="text-lg font-bold">No pages in your hifz yet</div>
         <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-          You don't have any memorised or recent pages in {focus.focusLabel} yet.
-          Add them via the surah picker on the dashboard, then they'll show up here.
+          Add memorised pages via the surah picker on the dashboard, then they’ll
+          show up in the cycle.
         </p>
         <button
           onClick={() => navigate('/revise')}
@@ -94,6 +97,11 @@ export function RecoverySession() {
       </div>
     )
   }
+
+  const firstJuz = allPages[0].pages.juz
+  const lastJuz = allPages[allPages.length - 1].pages.juz
+  const juzLabel =
+    firstJuz === lastJuz ? `Juz ${firstJuz}` : `Juz ${firstJuz} → Juz ${lastJuz}`
 
   return (
     <PageTransition>
@@ -107,9 +115,11 @@ export function RecoverySession() {
             ← Back
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold truncate">{focus.focusLabel}</h1>
-            <div className="text-[10px] uppercase tracking-widest text-amber-400/80">
-              {focus.dayName} · {allPages.length} of {focus.totalAvailable} pages
+            <h1 className="text-lg font-bold truncate">{juzLabel}</h1>
+            <div className="text-[10px] uppercase tracking-widest text-purple-300/90">
+              Cycle {focus.effectiveCursor + 1}–
+              {focus.effectiveCursor + allPages.length} of {focus.cycleLength} ·
+              Loops completed {focus.loops}
             </div>
           </div>
         </div>
@@ -121,7 +131,9 @@ export function RecoverySession() {
           <div className="flex-1 bg-[#151a23] rounded-full h-1.5">
             <div
               className="bg-purple-500 h-1.5 rounded-full transition-all"
-              style={{ width: `${((currentIndex + 1) / allPages.length) * 100}%` }}
+              style={{
+                width: `${((currentIndex + 1) / allPages.length) * 100}%`,
+              }}
             />
           </div>
           <span className="text-xs text-slate-500">
@@ -144,7 +156,9 @@ export function RecoverySession() {
             <div className="lg:order-2 lg:sticky lg:top-10 lg:self-start">
               <div className="bg-[#151a23] rounded-xl p-3 flex justify-between items-center mb-3">
                 <div>
-                  <div className="text-base font-bold">Page {currentPage.page_number}</div>
+                  <div className="text-base font-bold">
+                    Page {currentPage.page_number}
+                  </div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     {currentPage.pages.surah_name} · Juz {currentPage.pages.juz}
                   </div>
@@ -153,44 +167,26 @@ export function RecoverySession() {
                   <div className="text-xs font-bold uppercase text-purple-400">
                     Recovery
                   </div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Strength {currentPage.strength.toFixed(1)}
-                  </div>
                 </div>
               </div>
 
-              <div className="mb-3">
-                <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
-                  How well did you know this page?
+              <div className="bg-[#151a23] rounded-2xl p-4 mb-4">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="text-xs uppercase tracking-widest text-slate-500">
+                    Repetitions
+                  </div>
+                  <div className="text-xs text-amber-400 font-semibold">
+                    target {REP_TARGET}
+                  </div>
                 </div>
-                <RatingButtons
-                  selected={rating}
-                  onSelect={(r) => {
-                    setRating(r)
-                    setReps(0)
-                  }}
+                <RepCounter
+                  label="Repetitions"
+                  count={reps}
+                  target={REP_TARGET}
+                  color="purple"
+                  onAdd={() => setReps((r) => r + 1)}
                 />
               </div>
-
-              {rating && (
-                <div className="bg-[#151a23] rounded-2xl p-4 mb-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-xs uppercase tracking-widest text-slate-500">
-                      Suggested Repetitions
-                    </div>
-                    <div className="text-xs text-amber-400 font-semibold">
-                      {suggestedReps} reps · {rating}
-                    </div>
-                  </div>
-                  <RepCounter
-                    label="Repetitions"
-                    count={reps}
-                    target={suggestedReps}
-                    color="purple"
-                    onAdd={() => setReps((r) => r + 1)}
-                  />
-                </div>
-              )}
 
               <div className="flex gap-2">
                 <button
@@ -201,10 +197,11 @@ export function RecoverySession() {
                 </button>
                 <button
                   onClick={handleNext}
-                  disabled={!rating}
-                  className="btn-gradient flex-1 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
+                  className="btn-gradient flex-1 text-white rounded-xl py-3 font-bold text-sm"
                 >
-                  {currentIndex + 1 >= allPages.length ? 'Finish ✓' : 'Next page →'}
+                  {currentIndex + 1 >= allPages.length
+                    ? 'Finish ✓'
+                    : 'Next page →'}
                 </button>
               </div>
             </div>

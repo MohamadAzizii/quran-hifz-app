@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageTransition } from '../components/PageTransition'
 import { useUserPagesQuery } from '../hooks/useUserPages'
-import { getTodaysFocus, type UserPageWithJuz } from '../lib/recovery-plan'
+import { useDeviceSettings } from '../hooks/useDeviceSettings'
+import { getCycleFocus, type UserPageWithJuz } from '../lib/recovery-plan'
 
 const PRIORITY = [
   { juz: 'Juz 30', detail: 'Rebuild from scratch — used most in salah' },
@@ -38,16 +39,6 @@ const SESSION = [
   },
 ]
 
-const WEEKLY = [
-  { day: 'Saturday', focus: 'Juz 30' },
-  { day: 'Sunday', focus: 'Juz 30' },
-  { day: 'Monday', focus: 'Juz 29' },
-  { day: 'Tuesday', focus: 'Juz 28' },
-  { day: 'Wednesday', focus: 'Juz 27' },
-  { day: 'Thursday', focus: 'Juz 26' },
-  { day: 'Friday', focus: 'Full weak surah day — Yaseen + anything fragile' },
-]
-
 const METRICS = [
   'How many days did I complete the 90 minute session? (Target: 7/7)',
   'How many prayers did I recite from my weak list? (Target: 25+/35)',
@@ -76,7 +67,24 @@ function Section({
 export function RecoveryPlan() {
   const navigate = useNavigate()
   const { data: pages = [] } = useUserPagesQuery()
-  const focus = useMemo(() => getTodaysFocus(pages as UserPageWithJuz[]), [pages])
+  const { settings: device } = useDeviceSettings()
+  const focus = useMemo(
+    () =>
+      getCycleFocus(
+        pages as UserPageWithJuz[],
+        device.recoveryCursor,
+        device.recoveryLoops
+      ),
+    [pages, device.recoveryCursor, device.recoveryLoops]
+  )
+  const sessionFirst = focus.sessionPages[0]
+  const sessionLast = focus.sessionPages[focus.sessionPages.length - 1]
+  const sessionJuzLabel =
+    sessionFirst && sessionLast
+      ? sessionFirst.pages.juz === sessionLast.pages.juz
+        ? `Juz ${sessionFirst.pages.juz}`
+        : `Juz ${sessionFirst.pages.juz} → Juz ${sessionLast.pages.juz}`
+      : ''
 
   return (
     <PageTransition>
@@ -97,16 +105,23 @@ export function RecoveryPlan() {
 
           <div className="glass rounded-3xl p-5 mb-6 relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
-            <div className="text-[10px] uppercase tracking-widest text-purple-300/90 mb-1">
-              Today · {focus.dayName}
+            <div className="flex items-start justify-between mb-1">
+              <div className="text-[10px] uppercase tracking-widest text-purple-300/90">
+                Today’s 10 pages
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-emerald-400/80 bg-emerald-500/10 border border-emerald-400/20 rounded-md px-2 py-0.5">
+                Loops {focus.loops}
+              </div>
             </div>
-            <div className="text-xl font-bold mb-1">{focus.focusLabel}</div>
+            <div className="text-xl font-bold mb-1">
+              {focus.cycleLength === 0
+                ? 'Nothing in your hifz yet'
+                : `${sessionJuzLabel} · Pages ${sessionFirst!.page_number}–${sessionLast!.page_number}`}
+            </div>
             <div className="text-xs text-slate-400 mb-4">
-              {focus.totalAvailable === 0
-                ? `No pages from ${focus.focusLabel} in your hifz yet.`
-                : focus.sessionPages.length === focus.totalAvailable
-                  ? `${focus.totalAvailable} page${focus.totalAvailable === 1 ? '' : 's'} in your hifz — all included in today's session.`
-                  : `${focus.sessionPages.length} weakest pages selected from ${focus.totalAvailable} in your hifz.`}
+              {focus.cycleLength === 0
+                ? 'Add memorised pages via the surah picker to start the cycle.'
+                : `Cycle position ${focus.effectiveCursor + 1}–${focus.effectiveCursor + focus.sessionPages.length} of ${focus.cycleLength}. 10 reps each, out loud.`}
             </div>
             <button
               onClick={() => navigate('/revise/session')}
@@ -115,11 +130,11 @@ export function RecoveryPlan() {
             >
               {focus.sessionPages.length === 0
                 ? 'Add pages first'
-                : 'Start today’s 90-min session →'}
+                : 'Start today’s 10 pages →'}
             </button>
             <p className="text-[10px] text-slate-500 mt-3 leading-relaxed">
-              Ratings still update each page’s strength and review schedule.
-              Sheikh’s protocol: 10 pages, 10 reps each, out loud.
+              Sequential from Juz 30 downward. Skipping a day leaves the same 10 pages
+              waiting tomorrow — the cursor only advances when you finish.
             </p>
           </div>
 
@@ -187,14 +202,14 @@ export function RecoveryPlan() {
             </p>
           </Section>
 
-          <Section eyebrow="Weekly structure" title="Day-by-day focus">
-            <div className="bg-[#0f131b] border border-white/[0.06] rounded-xl divide-y divide-white/[0.06]">
-              {WEEKLY.map((w) => (
-                <div key={w.day} className="flex items-center px-4 py-2.5">
-                  <span className="w-24 text-sm font-semibold">{w.day}</span>
-                  <span className="text-sm text-slate-300 flex-1">{w.focus}</span>
-                </div>
-              ))}
+          <Section eyebrow="The cycle" title="Sequential — 10 pages a day, restart on completion">
+            <div className="bg-[#0f131b] border border-white/[0.06] rounded-xl p-4 space-y-2 text-sm text-slate-300 leading-relaxed">
+              <p>Start at the top of Juz 30 (Surah An-Naba) and work 10 pages a day.</p>
+              <p>About 2 days per juz. After Juz 30, move to Juz 29, then 28, then 27, then 26 — same way, top to bottom.</p>
+              <p>When every juz in your hifz is done, the cycle restarts and the loop counter ticks up.</p>
+              <p className="text-slate-500">
+                Skip a day and the same 10 pages are waiting tomorrow — the cursor only advances when you finish a session.
+              </p>
             </div>
           </Section>
 
