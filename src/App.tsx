@@ -9,6 +9,7 @@ import { Dashboard } from './screens/Dashboard'
 import { MemorisationSession } from './screens/MemorisationSession'
 import { RevisionSession } from './screens/RevisionSession'
 import { RecoveryPlan } from './screens/RecoveryPlan'
+import { RecoverySession } from './screens/RecoverySession'
 import { MyQuran } from './screens/MyQuran'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { SurahPicker } from './screens/SurahPicker'
@@ -65,6 +66,7 @@ function AnimatedRoutes() {
         <Route path="/memorise" element={<MemorisationSession />} />
         <Route path="/pick-surah" element={<SurahPicker />} />
         <Route path="/revise" element={RECOVERY_MODE ? <RecoveryPlan /> : <RevisionSession />} />
+        <Route path="/revise/session" element={RECOVERY_MODE ? <RecoverySession /> : <RevisionSession />} />
         <Route path="/quran" element={<MyQuran />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="*" element={<Navigate to="/" />} />

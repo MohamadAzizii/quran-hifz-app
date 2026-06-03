@@ -1,5 +1,8 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageTransition } from '../components/PageTransition'
+import { useUserPagesQuery } from '../hooks/useUserPages'
+import { getTodaysFocus, type UserPageWithJuz } from '../lib/recovery-plan'
 
 const PRIORITY = [
   { juz: 'Juz 30', detail: 'Rebuild from scratch — used most in salah' },
@@ -72,6 +75,9 @@ function Section({
 
 export function RecoveryPlan() {
   const navigate = useNavigate()
+  const { data: pages = [] } = useUserPagesQuery()
+  const focus = useMemo(() => getTodaysFocus(pages as UserPageWithJuz[]), [pages])
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-[#0b0e14] text-white pb-24 md:pb-10">
@@ -88,6 +94,34 @@ export function RecoveryPlan() {
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold mb-1">Your Hifz Recovery Plan</h1>
           <p className="text-slate-400 text-sm mb-6">Zero new memorisation. Revision only.</p>
+
+          <div className="glass rounded-3xl p-5 mb-6 relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
+            <div className="text-[10px] uppercase tracking-widest text-purple-300/90 mb-1">
+              Today · {focus.dayName}
+            </div>
+            <div className="text-xl font-bold mb-1">{focus.focusLabel}</div>
+            <div className="text-xs text-slate-400 mb-4">
+              {focus.totalAvailable === 0
+                ? `No pages from ${focus.focusLabel} in your hifz yet.`
+                : focus.sessionPages.length === focus.totalAvailable
+                  ? `${focus.totalAvailable} page${focus.totalAvailable === 1 ? '' : 's'} in your hifz — all included in today's session.`
+                  : `${focus.sessionPages.length} weakest pages selected from ${focus.totalAvailable} in your hifz.`}
+            </div>
+            <button
+              onClick={() => navigate('/revise/session')}
+              disabled={focus.sessionPages.length === 0}
+              className="btn-gradient w-full text-white rounded-xl py-3 text-sm font-bold disabled:opacity-40"
+            >
+              {focus.sessionPages.length === 0
+                ? 'Add pages first'
+                : 'Start today’s 90-min session →'}
+            </button>
+            <p className="text-[10px] text-slate-500 mt-3 leading-relaxed">
+              Ratings still update each page’s strength and review schedule.
+              Sheikh’s protocol: 10 pages, 10 reps each, out loud.
+            </p>
+          </div>
 
           <Section eyebrow="Priority order" title="What to fix, in order">
             <ol className="space-y-2">
