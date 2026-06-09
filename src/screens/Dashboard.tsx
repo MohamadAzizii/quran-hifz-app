@@ -14,7 +14,7 @@ import {
   getReadingFocus,
   type UserPageWithJuz,
 } from '../lib/reading-cycle'
-import { countFullyMemorisedJuz } from '../lib/juz-progress'
+import { approximateJuzMemorised } from '../lib/juz-progress'
 
 export function Dashboard() {
   useAutoGraduate()
@@ -63,9 +63,10 @@ export function Dashboard() {
   const memorisedCount = pages.filter(
     (p) => p.status === 'memorised' || p.status === 'recent'
   ).length
-  // Only counts a juz once every page in it is memorised or recent — partial
-  // juz progress doesn't bump this number.
-  const memorisedJuzCount = countFullyMemorisedJuz(pages)
+  // Aggregates memorised pages across the whole hifz and divides by ~20.
+  // 10 pages of Yaseen + 10 pages of An-Nur = 20 = 1 juz, even though
+  // neither juz is fully complete on its own.
+  const memorisedJuzCount = approximateJuzMemorised(pages)
   const pct = Math.round((memorisedCount / 604) * 100)
 
   const learningPages = pages

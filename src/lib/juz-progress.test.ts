@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
-  countFullyMemorisedJuz,
+  approximateJuzMemorised,
   JUZ_PAGE_COUNTS,
+  PAGES_PER_JUZ,
   type PageWithJuzMeta,
 } from './juz-progress'
 
@@ -36,60 +37,76 @@ describe('JUZ_PAGE_COUNTS', () => {
   it('Juz 30 has 23 pages (An-Naba to An-Nas)', () => {
     expect(JUZ_PAGE_COUNTS[30]).toBe(23)
   })
+
+  it('uses 20 as the approximate-juz divisor', () => {
+    expect(PAGES_PER_JUZ).toBe(20)
+  })
 })
 
-describe('countFullyMemorisedJuz', () => {
-  it('counts a juz as memorised only when every page is memorised or recent', () => {
-    // Full Juz 30: 23 pages, all memorised.
-    const fullJuz30 = Array.from({ length: 23 }, (_, i) =>
-      makePage({ page_number: 582 + i, juz: 30, status: 'memorised' })
+describe('approximateJuzMemorised', () => {
+  it('counts 20 memorised pages across two different juzes as 1 juz', () => {
+    // 10 pages from Juz 22 (Yaseen-area) + 10 pages from Juz 18 (Nur-area).
+    const yaseen10 = Array.from({ length: 10 }, (_, i) =>
+      makePage({ page_number: 440 + i, juz: 22 })
     )
-    expect(countFullyMemorisedJuz(fullJuz30)).toBe(1)
+    const nur10 = Array.from({ length: 10 }, (_, i) =>
+      makePage({ page_number: 350 + i, juz: 18 })
+    )
+    expect(approximateJuzMemorised([...yaseen10, ...nur10])).toBe(1)
   })
 
-  it('does NOT count a juz where only some pages are memorised', () => {
-    // Only 5 of 20 pages of Juz 29 memorised.
-    const partialJuz29 = Array.from({ length: 5 }, (_, i) =>
-      makePage({ page_number: 562 + i, juz: 29, status: 'memorised' })
+  it('floors so 30 pages is still 1 juz (not 1.5 or 2)', () => {
+    const pages = Array.from({ length: 30 }, (_, i) =>
+      makePage({ page_number: 100 + i, juz: 5 })
     )
-    expect(countFullyMemorisedJuz(partialJuz29)).toBe(0)
+    expect(approximateJuzMemorised(pages)).toBe(1)
   })
 
-  it('counts multiple complete juzes', () => {
-    const fullJuz30 = Array.from({ length: 23 }, (_, i) =>
-      makePage({ page_number: 582 + i, juz: 30, status: 'memorised' })
+  it('40 memorised pages = 2 juz', () => {
+    const pages = Array.from({ length: 40 }, (_, i) =>
+      makePage({ page_number: 100 + i, juz: 5 })
     )
-    const fullJuz29 = Array.from({ length: 20 }, (_, i) =>
-      makePage({ page_number: 562 + i, juz: 29, status: 'recent' })
-    )
-    expect(countFullyMemorisedJuz([...fullJuz30, ...fullJuz29])).toBe(2)
+    expect(approximateJuzMemorised(pages)).toBe(2)
   })
 
-  it('treats recent and memorised the same way for completeness', () => {
-    // 10 recent + 10 memorised in Juz 28 = full juz of 20.
-    const juz28 = [
+  it('counts a full Juz 30 (23 pages) as 1, not 0', () => {
+    const juz30 = Array.from({ length: 23 }, (_, i) =>
+      makePage({ page_number: 582 + i, juz: 30 })
+    )
+    expect(approximateJuzMemorised(juz30)).toBe(1)
+  })
+
+  it('counts recent pages as well as memorised', () => {
+    const pages = [
       ...Array.from({ length: 10 }, (_, i) =>
-        makePage({ page_number: 542 + i, juz: 28, status: 'recent' })
+        makePage({ page_number: 100 + i, juz: 5, status: 'recent' })
       ),
       ...Array.from({ length: 10 }, (_, i) =>
-        makePage({ page_number: 552 + i, juz: 28, status: 'memorised' })
+        makePage({ page_number: 200 + i, juz: 10, status: 'memorised' })
       ),
     ]
-    expect(countFullyMemorisedJuz(juz28)).toBe(1)
+    expect(approximateJuzMemorised(pages)).toBe(1)
   })
 
-  it('does not count learning pages toward juz completeness', () => {
-    const juz30 = Array.from({ length: 23 }, (_, i) =>
+  it('does not count learning pages', () => {
+    const pages = Array.from({ length: 25 }, (_, i) =>
       makePage({
-        page_number: 582 + i,
-        juz: 30,
-        status: i < 22 ? 'memorised' : 'learning', // 22 memorised + 1 still learning
+        page_number: 100 + i,
+        juz: 5,
+        status: i < 10 ? 'memorised' : 'learning', // only 10 hifzed
       })
     )
-    expect(countFullyMemorisedJuz(juz30)).toBe(0)
+    expect(approximateJuzMemorised(pages)).toBe(0) // floor(10 / 20) = 0
+  })
+
+  it('fewer than 20 memorised pages returns 0', () => {
+    const pages = Array.from({ length: 19 }, (_, i) =>
+      makePage({ page_number: 100 + i, juz: 5 })
+    )
+    expect(approximateJuzMemorised(pages)).toBe(0)
   })
 
   it('handles an empty hifz', () => {
-    expect(countFullyMemorisedJuz([])).toBe(0)
+    expect(approximateJuzMemorised([])).toBe(0)
   })
 })

@@ -8,22 +8,23 @@ export const JUZ_PAGE_COUNTS: Record<number, number> = (() => {
   return counts
 })()
 
+// "Approximately one juz" for the count headline — the user's mental model is
+// 1 juz ≈ 20 pages, regardless of whether those pages are all in the same juz
+// or spread across surahs from different juzes.
+export const PAGES_PER_JUZ = 20
+
 export type PageWithJuzMeta = UserPage & {
   pages: { juz: number }
 }
 
-// A juz counts as "memorised" only when EVERY page in that juz is memorised
-// (or recent — both states are post-memorisation). Partial-juz progress
-// does not bump the juz counter.
-export function countFullyMemorisedJuz(pages: PageWithJuzMeta[]): number {
-  const completeByJuz = new Map<number, number>()
-  for (const p of pages) {
-    if (p.status !== 'memorised' && p.status !== 'recent') continue
-    completeByJuz.set(p.pages.juz, (completeByJuz.get(p.pages.juz) ?? 0) + 1)
-  }
-  let count = 0
-  for (const [juz, n] of completeByJuz) {
-    if (n >= (JUZ_PAGE_COUNTS[juz] ?? Infinity)) count++
-  }
-  return count
+const isHifzed = (p: PageWithJuzMeta) =>
+  p.status === 'memorised' || p.status === 'recent'
+
+// Aggregate page count across the whole hifz, then divide by ~20 to give a
+// juz-equivalent headline. 10 pages in Juz 22 + 10 pages in Juz 18 = 20 = 1.
+// Floor so the number reflects "juzes I've actually filled" rather than
+// claiming a juz for being halfway through.
+export function approximateJuzMemorised(pages: PageWithJuzMeta[]): number {
+  const total = pages.filter(isHifzed).length
+  return Math.floor(total / PAGES_PER_JUZ)
 }
