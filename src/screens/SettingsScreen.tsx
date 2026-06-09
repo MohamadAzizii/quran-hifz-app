@@ -253,6 +253,36 @@ export function SettingsScreen() {
           )}
         </Section>
 
+        <Section title="Danger zone">
+          <SettingRow
+            label="Reset device state"
+            hint="Clears the reading cursor, loop counter, algorithm batch snapshot, and today's completion flags on THIS device. Doesn't touch your hifz pages on the server — use this after a server reset, or to start a fresh batch on this device."
+          >
+            <button
+              onClick={() => {
+                if (
+                  !confirm(
+                    'Clear local cursors, snapshots, and completion flags on this device? Server data is not affected.'
+                  )
+                )
+                  return
+                updateDevice({
+                  readingCursor: 0,
+                  readingLoops: 0,
+                  readingLastCompletedDate: '',
+                  algoBatchDate: '',
+                  algoBatchPages: [],
+                  algoBatchDone: [],
+                })
+                window.location.reload()
+              }}
+              className="bg-red-900/40 border border-red-500/40 text-red-300 hover:text-red-100 rounded-lg px-3 py-2 text-xs font-semibold"
+            >
+              Reset
+            </button>
+          </SettingRow>
+        </Section>
+
         <button
           onClick={() => signOut()}
           className="w-full mt-6 bg-[#151a23] border border-slate-700 text-slate-400 rounded-xl py-3 text-sm font-semibold"
