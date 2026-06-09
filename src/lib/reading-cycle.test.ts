@@ -3,7 +3,6 @@ import {
   getReadingOrderedPages,
   getReadingFocus,
   advanceReadingCursor,
-  READING_BATCH_SIZE,
   type UserPageWithJuz,
 } from './reading-cycle'
 
@@ -29,6 +28,16 @@ function makePage(opts: {
   }
 }
 
+const juz30Pages = Array.from({ length: 23 }, (_, i) =>
+  makePage({ page_number: 582 + i, juz: 30 })
+)
+const juz29Pages = Array.from({ length: 20 }, (_, i) =>
+  makePage({ page_number: 562 + i, juz: 29 })
+)
+const juz28Pages = Array.from({ length: 20 }, (_, i) =>
+  makePage({ page_number: 542 + i, juz: 28 })
+)
+
 describe('getReadingOrderedPages', () => {
   it('orders juz descending, page ascending within juz, and excludes learning pages', () => {
     const pages = [
@@ -44,53 +53,59 @@ describe('getReadingOrderedPages', () => {
 })
 
 describe('getReadingFocus', () => {
-  it('returns the first 30-page batch at cursor 0', () => {
-    const pages = Array.from({ length: 60 }, (_, i) =>
-      makePage({ page_number: 545 + i, juz: 29 - Math.floor(i / 20) })
-    )
-    const focus = getReadingFocus(pages, 0, 0)
-    expect(focus.sessionPages).toHaveLength(READING_BATCH_SIZE)
+  it('returns the whole current juz as the batch (juz 30 at cursor 0)', () => {
+    const focus = getReadingFocus([...juz29Pages, ...juz30Pages], 0, 0)
+    expect(focus.currentJuz).toBe(30)
+    expect(focus.sessionPages).toHaveLength(juz30Pages.length)
+    expect(focus.sessionPages[0].page_number).toBe(582)
+    expect(focus.sessionPages[focus.sessionPages.length - 1].page_number).toBe(604)
     expect(focus.batchStart).toBe(0)
     expect(focus.cursorWithinBatch).toBe(0)
   })
 
-  it('keeps the same batch when resuming mid-batch and reports cursorWithinBatch', () => {
-    const pages = Array.from({ length: 60 }, (_, i) =>
-      makePage({ page_number: 545 + i, juz: 30 })
-    )
-    const focus = getReadingFocus(pages, 5, 0)
-    expect(focus.batchStart).toBe(0)
-    expect(focus.cursorWithinBatch).toBe(5)
-    expect(focus.sessionPages).toHaveLength(READING_BATCH_SIZE)
-  })
-
-  it('jumps to the next batch when cursor has crossed the batch boundary', () => {
-    const pages = Array.from({ length: 60 }, (_, i) =>
-      makePage({ page_number: 545 + i, juz: 30 })
-    )
-    const focus = getReadingFocus(pages, 30, 0)
-    expect(focus.batchStart).toBe(30)
+  it('moves to the next juz when the cursor crosses the juz boundary', () => {
+    const focus = getReadingFocus([...juz29Pages, ...juz30Pages], 23, 0)
+    expect(focus.currentJuz).toBe(29)
+    expect(focus.sessionPages).toHaveLength(juz29Pages.length)
+    expect(focus.sessionPages[0].page_number).toBe(562)
+    expect(focus.batchStart).toBe(23)
     expect(focus.cursorWithinBatch).toBe(0)
   })
 
-  it('returns a shorter final batch when cycle length is not a multiple of the batch size', () => {
-    const pages = Array.from({ length: 35 }, (_, i) =>
-      makePage({ page_number: 545 + i, juz: 30 })
-    )
-    const focus = getReadingFocus(pages, 30, 0)
+  it('keeps the same juz batch when resuming mid-juz and reports cursorWithinBatch', () => {
+    // 7 pages into Juz 29 — matches the exact case the user hit on
+    // page 569 (Al-Ma'aarij).
+    const focus = getReadingFocus([...juz29Pages, ...juz30Pages], 30, 0)
+    expect(focus.currentJuz).toBe(29)
+    expect(focus.sessionPages).toHaveLength(juz29Pages.length)
+    expect(focus.sessionPages[0].page_number).toBe(562) // Mulk, start of juz 29
+    expect(focus.cursorWithinBatch).toBe(7)
+  })
+
+  it('returns only the user’s memorised pages within a juz (handles partial juz)', () => {
+    const juz29Partial = juz29Pages.slice(0, 5) // only 5 pages memorised of juz 29
+    const focus = getReadingFocus([...juz29Partial, ...juz30Pages], 23, 0)
+    expect(focus.currentJuz).toBe(29)
     expect(focus.sessionPages).toHaveLength(5)
+  })
+
+  it('skips an absent juz: jumps from juz 30 straight to juz 28', () => {
+    const focus = getReadingFocus([...juz28Pages, ...juz30Pages], 23, 0)
+    expect(focus.currentJuz).toBe(28)
+    expect(focus.sessionPages[0].page_number).toBe(542)
   })
 
   it('returns empty session for empty hifz', () => {
     const focus = getReadingFocus([], 0, 0)
     expect(focus.sessionPages).toHaveLength(0)
     expect(focus.cycleLength).toBe(0)
+    expect(focus.currentJuz).toBe(null)
   })
 })
 
 describe('advanceReadingCursor', () => {
   it('advances by completed page count', () => {
-    expect(advanceReadingCursor(0, 30, 100, 0)).toEqual({ cursor: 30, loops: 0 })
+    expect(advanceReadingCursor(0, 23, 100, 0)).toEqual({ cursor: 23, loops: 0 })
   })
 
   it('wraps to 0 and bumps loops on completion of the cycle', () => {

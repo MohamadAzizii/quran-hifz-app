@@ -19,7 +19,7 @@ export function Dashboard() {
   const { data: pages = [], isLoading: pagesLoading } = useUserPagesQuery()
   const { tasks } = useTodaysTasks()
   const { settings } = useSettings()
-  const { settings: device } = useDeviceSettings()
+  const { settings: device, update: updateDevice } = useDeviceSettings()
 
   const reading = useMemo(
     () =>
@@ -34,9 +34,7 @@ export function Dashboard() {
   const readingLast = reading.sessionPages[reading.sessionPages.length - 1]
   const readingRange =
     readingFirst && readingLast
-      ? readingFirst.pages.juz === readingLast.pages.juz
-        ? `Juz ${readingFirst.pages.juz} · Pages ${readingFirst.page_number}–${readingLast.page_number}`
-        : `Juz ${readingFirst.pages.juz} → Juz ${readingLast.pages.juz} · Pages ${readingFirst.page_number}–${readingLast.page_number}`
+      ? `Juz ${readingFirst.pages.juz} · ${readingFirst.pages.surah_name} → ${readingLast.pages.surah_name}`
       : ''
   const algorithmCount = tasks.recentPages.length + tasks.spacedPages.length
 
@@ -130,14 +128,11 @@ export function Dashboard() {
           Revision
         </div>
 
-        <button
-          onClick={() => navigate('/revise/reading')}
-          className="w-full glass rounded-3xl p-5 mb-3 relative overflow-hidden text-left"
-        >
+        <div className="glass rounded-3xl p-5 mb-3 relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
           <div className="flex items-start justify-between mb-1">
             <div className="text-[10px] uppercase tracking-widest text-emerald-300/90">
-              Daily reading · ~1.5 juz
+              Daily reading · 1 juz
             </div>
             {reading.loops > 0 && (
               <div className="text-[10px] uppercase tracking-widest text-emerald-400/80 bg-emerald-500/10 border border-emerald-400/20 rounded-md px-2 py-0.5">
@@ -150,14 +145,35 @@ export function Dashboard() {
               ? 'Nothing in your hifz yet'
               : readingRange}
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-slate-400 mb-3">
             {reading.cycleLength === 0
               ? 'Add memorised pages via the surah picker to start the cycle.'
               : reading.cursorWithinBatch > 0
                 ? `Resume at page ${reading.cursorWithinBatch + 1} of ${reading.sessionPages.length}.`
                 : `${reading.sessionPages.length} pages. Just read each one and tap Next.`}
           </div>
-        </button>
+          <button
+            onClick={() => navigate('/revise/reading')}
+            disabled={reading.cycleLength === 0}
+            className="btn-gradient w-full text-white rounded-xl py-3 text-sm font-bold disabled:opacity-40"
+          >
+            {reading.cycleLength === 0
+              ? 'Add pages first'
+              : reading.cursorWithinBatch > 0
+                ? `Resume at page ${reading.cursorWithinBatch + 1} →`
+                : `Start Juz ${reading.currentJuz} →`}
+          </button>
+          {reading.cursorWithinBatch > 0 && reading.currentJuz !== null && (
+            <button
+              onClick={() =>
+                updateDevice({ readingCursor: reading.batchStart })
+              }
+              className="w-full mt-2 text-xs text-slate-500 hover:text-slate-300 py-1.5"
+            >
+              ↺ Restart Juz {reading.currentJuz} from page 1
+            </button>
+          )}
+        </div>
 
         <button
           onClick={() => navigate('/revise')}

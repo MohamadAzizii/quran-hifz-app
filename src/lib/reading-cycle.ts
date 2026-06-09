@@ -1,15 +1,14 @@
-// Daily reading cycle: walk the user's hifz one batch at a time, juz 30 first
-// (top to bottom), then juz 29, then 28, etc. Each batch is READING_BATCH_SIZE
-// pages (~1.5 juz). The cursor identifies both which batch and how far into it
-// the user has got, so resuming opens at the same page they left off on.
+// Daily reading cycle: walk the user's hifz one juz at a time, juz 30 first
+// (top to bottom), then juz 29, then 28, etc. Each "batch" is a whole juz, so
+// the size varies (Juz 30 ≈ 23 pages, others ≈ 20). The cursor identifies both
+// which juz and how far into it the user has got — resuming opens at the same
+// page they left off on.
 
 import type { UserPage } from '../types'
 
 export type UserPageWithJuz = UserPage & {
   pages: { juz: number; hizb: number; surah_name: string }
 }
-
-export const READING_BATCH_SIZE = 30 // ~1.5 juz
 
 const isRevisionStatus = (p: UserPage) =>
   p.status === 'memorised' || p.status === 'recent'
@@ -30,6 +29,7 @@ export interface ReadingFocus {
   cursorWithinBatch: number
   cycleLength: number
   loops: number
+  currentJuz: number | null
 }
 
 export function getReadingFocus(
@@ -46,12 +46,16 @@ export function getReadingFocus(
       cursorWithinBatch: 0,
       cycleLength: 0,
       loops,
+      currentJuz: null,
     }
   }
   const effective = ((cursor % ordered.length) + ordered.length) % ordered.length
-  const batchStart =
-    Math.floor(effective / READING_BATCH_SIZE) * READING_BATCH_SIZE
-  const sessionPages = ordered.slice(batchStart, batchStart + READING_BATCH_SIZE)
+
+  // Juz-aligned: the batch is every page of the juz the cursor lands in.
+  const currentJuz = ordered[effective].pages.juz
+  const batchStart = ordered.findIndex((p) => p.pages.juz === currentJuz)
+  const sessionPages = ordered.filter((p) => p.pages.juz === currentJuz)
+
   return {
     ordered,
     sessionPages,
@@ -59,6 +63,7 @@ export function getReadingFocus(
     cursorWithinBatch: effective - batchStart,
     cycleLength: ordered.length,
     loops,
+    currentJuz,
   }
 }
 
