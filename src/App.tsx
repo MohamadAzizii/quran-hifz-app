@@ -8,12 +8,10 @@ import { LoginScreen } from './screens/LoginScreen'
 import { Dashboard } from './screens/Dashboard'
 import { MemorisationSession } from './screens/MemorisationSession'
 import { RevisionSession } from './screens/RevisionSession'
-import { RecoveryPlan } from './screens/RecoveryPlan'
-import { RecoverySession } from './screens/RecoverySession'
+import { ReadingSession } from './screens/ReadingSession'
 import { MyQuran } from './screens/MyQuran'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { SurahPicker } from './screens/SurahPicker'
-import { RECOVERY_MODE } from './lib/feature-flags'
 import { BottomNav } from './components/BottomNav'
 import { Sidebar } from './components/Sidebar'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -65,8 +63,8 @@ function AnimatedRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/memorise" element={<MemorisationSession />} />
         <Route path="/pick-surah" element={<SurahPicker />} />
-        <Route path="/revise" element={RECOVERY_MODE ? <RecoveryPlan /> : <RevisionSession />} />
-        <Route path="/revise/session" element={RECOVERY_MODE ? <RecoverySession /> : <RevisionSession />} />
+        <Route path="/revise" element={<RevisionSession />} />
+        <Route path="/revise/reading" element={<ReadingSession />} />
         <Route path="/quran" element={<MyQuran />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="*" element={<Navigate to="/" />} />

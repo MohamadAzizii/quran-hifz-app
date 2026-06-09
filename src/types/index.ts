@@ -69,8 +69,6 @@ export interface TodaysTasks {
   recentPages: UserPage[]
   spacedPages: UserPage[]
   totalDue: number
-  revisionDueTotal: number // due recent + spaced before the daily cap is applied
-  revisionCarriedTotal: number // pages carried over (overdue from previous days)
 }
 
 export interface SM2Result {

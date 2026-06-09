@@ -171,24 +171,6 @@ export function SettingsScreen() {
 
         <Section title="Revision">
           <SettingRow
-            label="Max revision pages / day"
-            hint="Target for how many pages appear for revision each day. All due recent-cycle pages always show; the rest of this budget is filled with memorised pages. Anything beyond it rolls over."
-          >
-            <NumberInput
-              value={device.revisionDailyLimit}
-              onChange={(v) => updateDevice({ revisionDailyLimit: v })}
-            />
-          </SettingRow>
-          <SettingRow
-            label="Max weak pages / day"
-            hint="Of the memorised pages added to revision, at most this many may be weak (red). The remaining slots are filled with okay/strong pages so a single day isn't all hard pages."
-          >
-            <NumberInput
-              value={device.weakDailyLimit}
-              onChange={(v) => updateDevice({ weakDailyLimit: v })}
-            />
-          </SettingRow>
-          <SettingRow
             label="Recent cycle (days)"
             hint="After you memorise a page it's a 'Recent' page and shows up for revision every day for this many days, to lock it in. After that it graduates to spaced revision (reviewed less and less often as it gets stronger)."
           >

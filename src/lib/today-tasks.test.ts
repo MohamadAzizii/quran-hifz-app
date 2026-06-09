@@ -22,153 +22,102 @@ function makePage(overrides: Partial<UserPage>): UserPage {
 }
 
 describe('computeTodaysTasks', () => {
-  it('includes learning pages in newPages regardless of next_review_date', () => {
+  it('puts learning pages in newPages regardless of next_review_date', () => {
     const pages = [makePage({ status: 'learning', next_review_date: '2099-01-01' })]
     const result = computeTodaysTasks(pages, today)
     expect(result.newPages).toHaveLength(1)
     expect(result.recentPages).toHaveLength(0)
   })
 
-  it('includes recent pages due today or earlier', () => {
+  it('caps recent pages at 2, most overdue first', () => {
     const pages = [
       makePage({ page_number: 1, status: 'recent', next_review_date: today }),
-      makePage({ page_number: 2, status: 'recent', next_review_date: '2026-05-20' }),
+      makePage({ page_number: 2, status: 'recent', next_review_date: '2026-05-15' }),
+      makePage({ page_number: 3, status: 'recent', next_review_date: '2026-05-10' }),
+      makePage({ page_number: 4, status: 'recent', next_review_date: '2026-05-12' }),
+    ]
+    const result = computeTodaysTasks(pages, today)
+    expect(result.recentPages.map((p) => p.page_number)).toEqual([3, 4])
+  })
+
+  it('excludes future-dated recent pages', () => {
+    const pages = [
+      makePage({ page_number: 1, status: 'recent', next_review_date: today }),
+      makePage({ page_number: 2, status: 'recent', next_review_date: '2099-01-01' }),
     ]
     const result = computeTodaysTasks(pages, today)
     expect(result.recentPages).toHaveLength(1)
-    expect(result.recentPages[0].page_number).toBe(1)
   })
 
-  it('includes memorised pages due today or earlier in spacedPages', () => {
+  it('picks 1 most overdue + 1 weakest memorised page', () => {
     const pages = [
-      makePage({ page_number: 1, status: 'memorised', next_review_date: today }),
-      makePage({ page_number: 2, status: 'memorised', next_review_date: '2026-05-18' }),
-      makePage({ page_number: 3, status: 'memorised', next_review_date: '2026-05-20' }),
+      makePage({ page_number: 100, status: 'memorised', next_review_date: '2026-05-10', strength: 3 }),
+      makePage({ page_number: 101, status: 'memorised', next_review_date: '2026-05-15', strength: 1.4 }),
+      makePage({ page_number: 102, status: 'memorised', next_review_date: today, strength: 2.5 }),
     ]
     const result = computeTodaysTasks(pages, today)
+    const numbers = result.spacedPages.map((p) => p.page_number)
+    expect(numbers).toContain(100) // most overdue
+    expect(numbers).toContain(101) // weakest
+    expect(numbers).not.toContain(102)
     expect(result.spacedPages).toHaveLength(2)
   })
 
-  it('computes totalDue correctly', () => {
+  it('returns a single algorithm pick when only one memorised page is due', () => {
     const pages = [
-      makePage({ page_number: 1, status: 'learning' }),
-      makePage({ page_number: 2, status: 'recent', next_review_date: today }),
-      makePage({ page_number: 3, status: 'memorised', next_review_date: today }),
+      makePage({ page_number: 200, status: 'memorised', next_review_date: '2026-05-10', strength: 1.3 }),
+      makePage({ page_number: 201, status: 'memorised', next_review_date: '2030-01-01', strength: 3 }),
     ]
     const result = computeTodaysTasks(pages, today)
-    expect(result.totalDue).toBe(3)
+    expect(result.spacedPages.map((p) => p.page_number)).toEqual([200])
   })
 
-  it('does not include memorised pages whose next_review_date is in future', () => {
+  it('still fills the second algorithm slot when most-overdue == weakest, using the next-best page', () => {
     const pages = [
-      makePage({ page_number: 1, status: 'memorised', next_review_date: '2030-01-01' }),
+      makePage({ page_number: 200, status: 'memorised', next_review_date: '2026-05-10', strength: 1.3 }),
+      makePage({ page_number: 201, status: 'memorised', next_review_date: today, strength: 3 }),
+    ]
+    const result = computeTodaysTasks(pages, today)
+    // 200 is both most-overdue and weakest — still pick 201 for the 2nd slot.
+    expect(result.spacedPages).toHaveLength(2)
+    expect(result.spacedPages.map((p) => p.page_number)).toEqual([200, 201])
+  })
+
+  it('excludes memorised pages whose next_review_date is in the future', () => {
+    const pages = [
+      makePage({ page_number: 300, status: 'memorised', next_review_date: '2030-01-01' }),
     ]
     const result = computeTodaysTasks(pages, today)
     expect(result.spacedPages).toHaveLength(0)
-    expect(result.totalDue).toBe(0)
   })
 
-  it('caps total revision (recent + spaced) at the daily limit', () => {
-    const pages = Array.from({ length: 20 }, (_, i) =>
-      makePage({ page_number: i + 1, status: 'memorised', next_review_date: today })
-    )
-    const result = computeTodaysTasks(pages, today, 8)
-    expect(result.recentPages.length + result.spacedPages.length).toBe(8)
-    expect(result.revisionDueTotal).toBe(20)
-  })
-
-  it('counts recent and spaced together against the cap', () => {
-    const pages = [
-      ...Array.from({ length: 5 }, (_, i) =>
-        makePage({ page_number: i + 1, status: 'recent', next_review_date: today })
-      ),
-      ...Array.from({ length: 5 }, (_, i) =>
-        makePage({ page_number: i + 100, status: 'memorised', next_review_date: today })
-      ),
-    ]
-    const result = computeTodaysTasks(pages, today, 8)
-    expect(result.recentPages.length + result.spacedPages.length).toBe(8)
-  })
-
-  it('always shows carried-over (overdue) memorised pages even when the cap would exclude them', () => {
-    const pages = [
-      makePage({ page_number: 1, status: 'memorised', next_review_date: '2026-05-10' }),
-      makePage({ page_number: 2, status: 'memorised', next_review_date: '2026-05-18' }),
-      makePage({ page_number: 3, status: 'memorised', next_review_date: today }),
-    ]
-    // Two pages are carried over (before today) — both shown despite limit=1.
-    // The fresh page from today doesn't fit and rolls forward.
-    const result = computeTodaysTasks(pages, today, 1)
-    expect(result.spacedPages).toHaveLength(2)
-    expect(result.spacedPages[0].page_number).toBe(1) // most overdue first
-    expect(result.spacedPages[1].page_number).toBe(2)
-    expect(result.revisionCarriedTotal).toBe(2)
-  })
-
-  it('rolls over a skipped queue: same pages still surface the next day', () => {
-    const pages = [
-      ...Array.from({ length: 8 }, (_, i) =>
-        makePage({ page_number: i + 1, status: 'memorised', strength: 2.5, next_review_date: '2026-05-18' })
-      ),
-      // A new memorised page becomes due today.
-      makePage({ page_number: 100, status: 'memorised', strength: 2.5, next_review_date: today }),
-    ]
-    const result = computeTodaysTasks(pages, today, 8, 3)
-    // All 8 carried-over pages still show; the new fresh page rolls forward.
-    expect(result.spacedPages).toHaveLength(8)
-    expect(result.spacedPages.map((p) => p.page_number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
-    expect(result.revisionCarriedTotal).toBe(8)
-  })
-
-  it('limits weak memorised pages and fills the rest with stronger pages', () => {
-    const pages = [
-      ...Array.from({ length: 6 }, (_, i) =>
-        makePage({ page_number: i + 1, status: 'memorised', strength: 1.5, next_review_date: today })
-      ),
-      ...Array.from({ length: 6 }, (_, i) =>
-        makePage({ page_number: i + 100, status: 'memorised', strength: 4, next_review_date: today })
-      ),
-    ]
-    const result = computeTodaysTasks(pages, today, 8, 3)
-    const weakShown = result.spacedPages.filter((p) => p.strength < 2).length
-    expect(weakShown).toBe(3)
-    expect(result.spacedPages).toHaveLength(8)
-  })
-
-  it('always includes every due recent page, then fills the budget with memorised', () => {
+  it('combined revision pages cap at 4 (2 recent + 2 algorithm)', () => {
     const pages = [
       ...Array.from({ length: 5 }, (_, i) =>
         makePage({ page_number: i + 1, status: 'recent', next_review_date: today })
       ),
       ...Array.from({ length: 10 }, (_, i) =>
-        makePage({ page_number: i + 100, status: 'memorised', strength: 2.5, next_review_date: today })
+        makePage({
+          page_number: 100 + i,
+          status: 'memorised',
+          next_review_date: today,
+          strength: 2 + i * 0.1,
+        })
       ),
     ]
-    const result = computeTodaysTasks(pages, today, 8, 3)
-    expect(result.recentPages).toHaveLength(5)
-    expect(result.spacedPages).toHaveLength(3) // budget 8 - 5 recent
-    expect(result.revisionDueTotal).toBe(15)
-  })
-
-  it('shows all recent pages even when they exceed the daily limit', () => {
-    const pages = Array.from({ length: 12 }, (_, i) =>
-      makePage({ page_number: i + 1, status: 'recent', next_review_date: today })
-    )
-    const result = computeTodaysTasks(pages, today, 8, 3)
-    expect(result.recentPages).toHaveLength(12)
-    expect(result.spacedPages).toHaveLength(0)
-  })
-
-  it('falls back to fewer weak pages when budget is tight', () => {
-    const pages = [
-      makePage({ page_number: 1, status: 'recent', next_review_date: today }),
-      ...Array.from({ length: 5 }, (_, i) =>
-        makePage({ page_number: i + 100, status: 'memorised', strength: 1.5, next_review_date: today })
-      ),
-    ]
-    const result = computeTodaysTasks(pages, today, 3, 3)
-    // budget 3 - 1 recent = 2 slots, all go to weak (no okay/strong available)
+    const result = computeTodaysTasks(pages, today)
+    expect(result.recentPages).toHaveLength(2)
     expect(result.spacedPages).toHaveLength(2)
-    expect(result.spacedPages.every((p) => p.strength < 2)).toBe(true)
+    expect(result.recentPages.length + result.spacedPages.length).toBe(4)
+  })
+
+  it('totalDue counts new + recent + spaced', () => {
+    const pages = [
+      makePage({ page_number: 1, status: 'learning' }),
+      makePage({ page_number: 2, status: 'recent', next_review_date: today }),
+      makePage({ page_number: 3, status: 'memorised', next_review_date: today, strength: 1.5 }),
+    ]
+    const result = computeTodaysTasks(pages, today)
+    expect(result.totalDue).toBe(3)
   })
 })

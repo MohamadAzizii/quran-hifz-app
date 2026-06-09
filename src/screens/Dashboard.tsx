@@ -1,12 +1,17 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
 import { useSettings } from '../hooks/useSettings'
+import { useDeviceSettings } from '../hooks/useDeviceSettings'
 import { useAutoGraduate } from '../hooks/useAutoGraduate'
 import { JuzStrengthMap } from '../components/JuzStrengthMap'
 import { RepStatsCard } from '../components/RepStatsCard'
 import { PageTransition } from '../components/PageTransition'
-import { RECOVERY_MODE } from '../lib/feature-flags'
+import {
+  getReadingFocus,
+  type UserPageWithJuz,
+} from '../lib/reading-cycle'
 
 export function Dashboard() {
   useAutoGraduate()
@@ -14,6 +19,26 @@ export function Dashboard() {
   const { data: pages = [], isLoading: pagesLoading } = useUserPagesQuery()
   const { tasks } = useTodaysTasks()
   const { settings } = useSettings()
+  const { settings: device } = useDeviceSettings()
+
+  const reading = useMemo(
+    () =>
+      getReadingFocus(
+        pages as UserPageWithJuz[],
+        device.readingCursor,
+        device.readingLoops
+      ),
+    [pages, device.readingCursor, device.readingLoops]
+  )
+  const readingFirst = reading.sessionPages[0]
+  const readingLast = reading.sessionPages[reading.sessionPages.length - 1]
+  const readingRange =
+    readingFirst && readingLast
+      ? readingFirst.pages.juz === readingLast.pages.juz
+        ? `Juz ${readingFirst.pages.juz} · Pages ${readingFirst.page_number}–${readingLast.page_number}`
+        : `Juz ${readingFirst.pages.juz} → Juz ${readingLast.pages.juz} · Pages ${readingFirst.page_number}–${readingLast.page_number}`
+      : ''
+  const algorithmCount = tasks.recentPages.length + tasks.spacedPages.length
 
   const memorisedCount = pages.filter(
     (p) => p.status === 'memorised' || p.status === 'recent'
@@ -101,94 +126,59 @@ export function Dashboard() {
           + Pick a surah to memorise
         </button>
 
-        {RECOVERY_MODE ? (
-          <>
-            <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
-              Revision
-            </div>
-            <button
-              onClick={() => navigate('/revise')}
-              className="w-full glass rounded-3xl p-5 mb-5 relative overflow-hidden text-left"
-            >
-              <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
-              <div className="text-[10px] uppercase tracking-widest text-amber-400/80 mb-1">
-                Phase 1 · Weeks 1–6
-              </div>
-              <div className="text-lg font-bold mb-1">Your Hifz Recovery Plan</div>
-              <div className="text-xs text-slate-400 leading-relaxed">
-                Zero new memorisation. 90-minute session every evening. Tap to open.
-              </div>
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
-              Today's Revision — {tasks.recentPages.length + tasks.spacedPages.length} pages
-              {tasks.revisionCarriedTotal > 0 && (
-                <span className="text-amber-400/80 normal-case tracking-normal">
-                  {' '}· {tasks.revisionCarriedTotal} carried over
-                </span>
-              )}
-              {tasks.revisionDueTotal > tasks.recentPages.length + tasks.spacedPages.length && (
-                <span className="text-slate-600 normal-case tracking-normal">
-                  {' '}· {tasks.revisionDueTotal - (tasks.recentPages.length + tasks.spacedPages.length)} more rolling over
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col gap-2 mb-5">
-              {tasks.recentPages.length > 0 && (
-                <div className="bg-[#151a23] border-l-4 border-amber-500 rounded-xl p-3 flex items-center gap-3">
-                  <div className="bg-amber-500/15 w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0">
-                    🔁
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-[10px] uppercase tracking-widest text-slate-500">
-                      Recent
-                    </div>
-                    <div className="text-sm font-semibold">
-                      {tasks.recentPages.length} pages due
-                    </div>
-                  </div>
-                  <div className="bg-[#0f131b] rounded-lg px-3 py-1 text-sm font-bold text-slate-400">
-                    ~10 reps/pg
-                  </div>
-                </div>
-              )}
-              {tasks.spacedPages.length > 0 && (
-                <div className="bg-[#151a23] border-l-4 border-purple-500 rounded-xl p-3 flex items-center gap-3">
-                  <div className="bg-purple-500/15 w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0">
-                    🧠
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-[10px] uppercase tracking-widest text-slate-500">
-                      Spaced Revision
-                    </div>
-                    <div className="text-sm font-semibold">
-                      {tasks.spacedPages.length} pages due
-                    </div>
-                  </div>
-                  <div className="bg-[#0f131b] rounded-lg px-3 py-1 text-sm font-bold text-slate-400">
-                    5–15 reps/pg
-                  </div>
-                </div>
-              )}
-              {tasks.recentPages.length === 0 && tasks.spacedPages.length === 0 && (
-                <div className="text-slate-500 text-sm text-center py-4">
-                  No revision due today 🎉
-                </div>
-              )}
-            </div>
+        <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
+          Revision
+        </div>
 
-            {(tasks.recentPages.length > 0 || tasks.spacedPages.length > 0) && (
-              <button
-                onClick={() => navigate('/revise')}
-                className="btn-gradient w-full text-white rounded-2xl py-4 text-base font-bold mb-5"
-              >
-                Start Today's Revision →
-              </button>
+        <button
+          onClick={() => navigate('/revise/reading')}
+          className="w-full glass rounded-3xl p-5 mb-3 relative overflow-hidden text-left"
+        >
+          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+          <div className="flex items-start justify-between mb-1">
+            <div className="text-[10px] uppercase tracking-widest text-emerald-300/90">
+              Daily reading · ~1.5 juz
+            </div>
+            {reading.loops > 0 && (
+              <div className="text-[10px] uppercase tracking-widest text-emerald-400/80 bg-emerald-500/10 border border-emerald-400/20 rounded-md px-2 py-0.5">
+                Loops {reading.loops}
+              </div>
             )}
-          </>
-        )}
+          </div>
+          <div className="text-lg font-bold mb-1">
+            {reading.cycleLength === 0
+              ? 'Nothing in your hifz yet'
+              : readingRange}
+          </div>
+          <div className="text-xs text-slate-400">
+            {reading.cycleLength === 0
+              ? 'Add memorised pages via the surah picker to start the cycle.'
+              : reading.cursorWithinBatch > 0
+                ? `Resume at page ${reading.cursorWithinBatch + 1} of ${reading.sessionPages.length}.`
+                : `${reading.sessionPages.length} pages. Just read each one and tap Next.`}
+          </div>
+        </button>
+
+        <button
+          onClick={() => navigate('/revise')}
+          disabled={algorithmCount === 0}
+          className="w-full glass rounded-3xl p-5 mb-5 relative overflow-hidden text-left disabled:opacity-50"
+        >
+          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
+          <div className="text-[10px] uppercase tracking-widest text-purple-300/90 mb-1">
+            Algorithm revision · up to 4 pages
+          </div>
+          <div className="text-lg font-bold mb-1">
+            {algorithmCount === 0
+              ? 'Nothing due today'
+              : `${algorithmCount} ${algorithmCount === 1 ? 'page' : 'pages'} due`}
+          </div>
+          <div className="text-xs text-slate-400 leading-relaxed">
+            {algorithmCount === 0
+              ? 'Check back tomorrow.'
+              : `${tasks.recentPages.length} recent + ${tasks.spacedPages.length} algorithm-picked (most overdue + weakest). Rate weak/okay/strong.`}
+          </div>
+        </button>
 
         <div className="mb-5">
           <JuzStrengthMap userPages={pages} />

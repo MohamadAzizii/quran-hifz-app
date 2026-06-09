@@ -5,49 +5,37 @@ import { useSession } from '../hooks/useSession'
 import { useDeviceSettings } from '../hooks/useDeviceSettings'
 import { MushafImage } from '../components/MushafImage'
 import { PageTransition } from '../components/PageTransition'
-import { RepCounter } from '../components/RepCounter'
 import {
-  getCycleFocus,
-  advanceCursor,
-  type CycleFocus,
+  getReadingFocus,
+  advanceReadingCursor,
+  type ReadingFocus,
   type UserPageWithJuz,
-} from '../lib/recovery-plan'
+} from '../lib/reading-cycle'
 
-const REP_TARGET = 10
-
-// Recovery-plan session: sequential 10-page cycle from Juz 30 top downward.
-// No strength rating — just count reps per page (target 10).
-//
-// Cursor advances per page (on Next/Skip), so leaving mid-session and coming
-// back resumes at the next undone page. We snapshot the focus on first mount
-// so the in-progress UI doesn't reshuffle while the cursor moves underneath it.
-export function RecoverySession() {
+// Daily reading session. Sequential walk through the user's hifz in 30-page
+// (~1.5 juz) batches, juz 30 first then 29, etc. No rating, no rep counter —
+// just the mushaf page and a Mark-read/Next button. Each completed page logs
+// 1 revision rep so the Dashboard counter reflects the work.
+export function ReadingSession() {
   const navigate = useNavigate()
   const { data: pages = [] } = useUserPagesQuery()
   const { settings: device, update: updateDevice } = useDeviceSettings()
   const { startSession, logRevisionReps, completeSession } = useSession()
 
-  // Snapshot the cycle focus on the first render where pages are loaded.
-  // Subsequent updates to device.recoveryCursor (which we ourselves trigger
-  // as the session progresses) must NOT change the session list.
-  const focusRef = useRef<CycleFocus | null>(null)
+  // Snapshot the focus on first render where pages are loaded; subsequent
+  // cursor updates (driven by this session) must not reshuffle the in-progress UI.
+  const focusRef = useRef<ReadingFocus | null>(null)
   if (focusRef.current === null && pages.length > 0) {
-    focusRef.current = getCycleFocus(
+    focusRef.current = getReadingFocus(
       pages as UserPageWithJuz[],
-      device.recoveryCursor,
-      device.recoveryLoops
+      device.readingCursor,
+      device.readingLoops
     )
   }
   const focus = focusRef.current
   const allPages = focus?.sessionPages ?? []
 
-  // Local-only counter: how many pages the user has clicked through since this
-  // component mounted. Combined with the snapshotted cursorWithinBatch, that
-  // gives the true position in the batch — robust against the focusRef
-  // populating later than the first useState initializer.
   const [doneSinceMount, setDoneSinceMount] = useState(0)
-  const [reps, setReps] = useState(0)
-
   const batchPosition = (focus?.cursorWithinBatch ?? 0) + doneSinceMount
   const currentPage = allPages[batchPosition] ?? null
 
@@ -60,35 +48,29 @@ export function RecoverySession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allPages.length])
 
-  // Persist progress to device cursor: batchStart + however many pages of this
-  // batch have been done. advanceCursor handles the wrap+loop-bump for us.
   const persistProgress = (pagesDoneInBatch: number) => {
     if (!focus) return
-    const next = advanceCursor(
+    const next = advanceReadingCursor(
       focus.batchStart,
       pagesDoneInBatch,
       focus.cycleLength,
       focus.loops
     )
-    updateDevice({ recoveryCursor: next.cursor, recoveryLoops: next.loops })
+    updateDevice({ readingCursor: next.cursor, readingLoops: next.loops })
   }
 
   const handleNext = async () => {
     if (!currentPage) return
-    // Idempotent: returns the existing session id, or the in-flight insert
-    // promise, or kicks off a new one. Ensures the log below isn't dropped
-    // because the on-mount startSession hadn't resolved yet.
     await startSession('revision')
-    await logRevisionReps(currentPage.page_number, reps)
+    await logRevisionReps(currentPage.page_number, 1)
     const nextPos = batchPosition + 1
     persistProgress(nextPos)
     if (nextPos >= allPages.length) {
       await completeSession(allPages.length)
-      navigate('/revise')
+      navigate('/')
       return
     }
     setDoneSinceMount((d) => d + 1)
-    setReps(0)
   }
 
   const handleSkip = async () => {
@@ -96,11 +78,10 @@ export function RecoverySession() {
     persistProgress(nextPos)
     if (nextPos >= allPages.length) {
       await completeSession(allPages.length)
-      navigate('/revise')
+      navigate('/')
       return
     }
     setDoneSinceMount((d) => d + 1)
-    setReps(0)
   }
 
   if (!focus || allPages.length === 0) {
@@ -109,13 +90,13 @@ export function RecoverySession() {
         <div className="text-lg font-bold">No pages in your hifz yet</div>
         <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
           Add memorised pages via the surah picker on the dashboard, then they’ll
-          show up in the cycle.
+          show up in the reading cycle.
         </p>
         <button
-          onClick={() => navigate('/revise')}
+          onClick={() => navigate('/')}
           className="mt-3 bg-[#151a23] border border-slate-700 text-slate-300 rounded-xl px-4 py-2 text-sm font-semibold"
         >
-          ← Back to plan
+          ← Back
         </button>
       </div>
     )
@@ -131,17 +112,18 @@ export function RecoverySession() {
       <div className="min-h-screen bg-[#0b0e14] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
         <div className="flex items-center gap-3 mb-4">
           <button
-            onClick={() => navigate('/revise')}
+            onClick={() => navigate('/')}
             className="bg-[#151a23] text-slate-400 rounded-lg px-3 py-2 text-sm"
-            aria-label="Back to plan"
+            aria-label="Back to dashboard"
           >
             ← Back
           </button>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold truncate">{juzLabel}</h1>
-            <div className="text-[10px] uppercase tracking-widest text-purple-300/90">
-              Cycle {focus.batchStart + 1}–{focus.batchStart + allPages.length}{' '}
-              of {focus.cycleLength} · Loops completed {focus.loops}
+            <div className="text-[10px] uppercase tracking-widest text-emerald-300/90">
+              Reading · {focus.batchStart + 1}–
+              {focus.batchStart + allPages.length} of {focus.cycleLength} ·
+              Loops {focus.loops}
             </div>
           </div>
         </div>
@@ -152,7 +134,7 @@ export function RecoverySession() {
           </span>
           <div className="flex-1 bg-[#151a23] rounded-full h-1.5">
             <div
-              className="bg-purple-500 h-1.5 rounded-full transition-all"
+              className="bg-emerald-500 h-1.5 rounded-full transition-all"
               style={{
                 width: `${((batchPosition + 1) / allPages.length) * 100}%`,
               }}
@@ -171,7 +153,7 @@ export function RecoverySession() {
                 surahName={currentPage.pages.surah_name}
                 juz={currentPage.pages.juz}
                 hizb={currentPage.pages.hizb}
-                defaultHidden={device.hideRevise}
+                defaultHidden={false}
               />
             </div>
 
@@ -186,28 +168,10 @@ export function RecoverySession() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-bold uppercase text-purple-400">
-                    Recovery
+                  <div className="text-xs font-bold uppercase text-emerald-400">
+                    Reading
                   </div>
                 </div>
-              </div>
-
-              <div className="bg-[#151a23] rounded-2xl p-4 mb-4">
-                <div className="flex justify-between items-center mb-3">
-                  <div className="text-xs uppercase tracking-widest text-slate-500">
-                    Repetitions
-                  </div>
-                  <div className="text-xs text-amber-400 font-semibold">
-                    target {REP_TARGET}
-                  </div>
-                </div>
-                <RepCounter
-                  label="Repetitions"
-                  count={reps}
-                  target={REP_TARGET}
-                  color="purple"
-                  onAdd={() => setReps((r) => r + 1)}
-                />
               </div>
 
               <div className="flex gap-2">
@@ -223,7 +187,7 @@ export function RecoverySession() {
                 >
                   {batchPosition + 1 >= allPages.length
                     ? 'Finish ✓'
-                    : 'Next page →'}
+                    : 'Mark read · Next →'}
                 </button>
               </div>
             </div>

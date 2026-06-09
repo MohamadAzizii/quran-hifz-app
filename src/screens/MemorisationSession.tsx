@@ -84,7 +84,13 @@ export function MemorisationSession() {
         graduate: true,
       })
       await completeSession(1)
-      navigate('/')
+      // Stay in the session — daily target is a soft target, not a lock.
+      // If another learning page is queued, the screen will pick it up on the
+      // next render. If not, leave the user on a "no pages" state with a
+      // Back button rather than auto-bouncing them out.
+      setRepsWithMushaf(0)
+      setRepsFromMemory(0)
+      setSessionStarted(false)
     } else {
       await advance.mutateAsync({
         page_number: currentPage.page_number,
