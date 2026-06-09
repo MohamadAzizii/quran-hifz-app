@@ -14,6 +14,7 @@ import {
   getReadingFocus,
   type UserPageWithJuz,
 } from '../lib/reading-cycle'
+import { countFullyMemorisedJuz } from '../lib/juz-progress'
 
 export function Dashboard() {
   useAutoGraduate()
@@ -62,11 +63,9 @@ export function Dashboard() {
   const memorisedCount = pages.filter(
     (p) => p.status === 'memorised' || p.status === 'recent'
   ).length
-  const memorisedJuzCount = new Set(
-    pages
-      .filter((p) => p.status === 'memorised' || p.status === 'recent')
-      .map((p) => p.pages.juz)
-  ).size
+  // Only counts a juz once every page in it is memorised or recent — partial
+  // juz progress doesn't bump this number.
+  const memorisedJuzCount = countFullyMemorisedJuz(pages)
   const pct = Math.round((memorisedCount / 604) * 100)
 
   const learningPages = pages
