@@ -9,6 +9,8 @@ import { useAutoGraduate } from '../hooks/useAutoGraduate'
 import { JuzStrengthMap } from '../components/JuzStrengthMap'
 import { RepStatsCard } from '../components/RepStatsCard'
 import { PageTransition } from '../components/PageTransition'
+import { QuoteOfTheDay } from '../components/QuoteOfTheDay'
+import { StreakBar } from '../components/StreakBar'
 import {
   getReadingFocus,
   type UserPageWithJuz,
@@ -38,16 +40,23 @@ export function Dashboard() {
       ? `Juz ${readingFirst.pages.juz} · ${readingFirst.pages.surah_name} → ${readingLast.pages.surah_name}`
       : ''
   const today = format(new Date(), 'yyyy-MM-dd')
-  const algoSnapshotActive =
-    device.algoBatchDate === today && device.algoBatchPages.length > 0
+  const algoSnapshotExists = device.algoBatchPages.length > 0
+  const algoSnapshotComplete =
+    algoSnapshotExists &&
+    device.algoBatchDone.length >= device.algoBatchPages.length
+  // An incomplete snapshot is the live one regardless of date — it carries
+  // forward until rated. A complete snapshot only matters if it was completed
+  // today (lets us show "all done"); otherwise we fall back to today's pick.
+  const algoSnapshotActive = algoSnapshotExists && !algoSnapshotComplete
+  const algoCompletedToday =
+    algoSnapshotExists &&
+    algoSnapshotComplete &&
+    device.algoBatchDate === today
   const algoSnapshotTotal = algoSnapshotActive
     ? device.algoBatchPages.length
     : tasks.recentPages.length + tasks.spacedPages.length
-  const algoSnapshotDone = algoSnapshotActive
-    ? device.algoBatchDone.length
-    : 0
+  const algoSnapshotDone = algoSnapshotActive ? device.algoBatchDone.length : 0
   const algoRemaining = algoSnapshotTotal - algoSnapshotDone
-  const algoAllDone = algoSnapshotActive && algoRemaining <= 0
 
   const memorisedCount = pages.filter(
     (p) => p.status === 'memorised' || p.status === 'recent'
@@ -75,6 +84,8 @@ export function Dashboard() {
     <PageTransition>
     <div className="min-h-screen bg-[#0b0e14] text-white pb-24 md:pb-10">
       <div className="max-w-lg md:max-w-4xl lg:max-w-5xl mx-auto px-4 md:px-8 pt-5 md:pt-10">
+        <QuoteOfTheDay />
+        <StreakBar />
         <div className="flex justify-between items-center mb-5">
           <h1 className="text-xl font-bold">My Hifz</h1>
         </div>
@@ -151,44 +162,63 @@ export function Dashboard() {
               </div>
             )}
           </div>
-          <div className="text-lg font-bold mb-1">
-            {reading.cycleLength === 0
-              ? 'Nothing in your hifz yet'
-              : readingRange}
-          </div>
-          <div className="text-xs text-slate-400 mb-3">
-            {reading.cycleLength === 0
-              ? 'Add memorised pages via the surah picker to start the cycle.'
-              : reading.cursorWithinBatch > 0
-                ? `Resume at page ${reading.cursorWithinBatch + 1} of ${reading.sessionPages.length}.`
-                : `${reading.sessionPages.length} pages. Just read each one and tap Next.`}
-          </div>
-          <button
-            onClick={() => navigate('/revise/reading')}
-            disabled={reading.cycleLength === 0}
-            className="btn-gradient w-full text-white rounded-xl py-3 text-sm font-bold disabled:opacity-40"
-          >
-            {reading.cycleLength === 0
-              ? 'Add pages first'
-              : reading.cursorWithinBatch > 0
-                ? `Resume at page ${reading.cursorWithinBatch + 1} →`
-                : `Start Juz ${reading.currentJuz} →`}
-          </button>
-          {reading.cursorWithinBatch > 0 && reading.currentJuz !== null && (
-            <button
-              onClick={() =>
-                updateDevice({ readingCursor: reading.batchStart })
-              }
-              className="w-full mt-2 text-xs text-slate-500 hover:text-slate-300 py-1.5"
-            >
-              ↺ Restart Juz {reading.currentJuz} from page 1
-            </button>
+          {device.readingLastCompletedDate === today ? (
+            <>
+              <div className="text-lg font-bold mb-1">
+                Today’s reading complete 🌙
+              </div>
+              <div className="text-xs text-slate-400 mb-3">
+                Well done — you finished a whole juz today. Next juz unlocks tomorrow.
+              </div>
+              <button
+                disabled
+                className="btn-gradient w-full text-white rounded-xl py-3 text-sm font-bold opacity-40"
+              >
+                ✓ Complete for today
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-lg font-bold mb-1">
+                {reading.cycleLength === 0
+                  ? 'Nothing in your hifz yet'
+                  : readingRange}
+              </div>
+              <div className="text-xs text-slate-400 mb-3">
+                {reading.cycleLength === 0
+                  ? 'Add memorised pages via the surah picker to start the cycle.'
+                  : reading.cursorWithinBatch > 0
+                    ? `Resume at page ${reading.cursorWithinBatch + 1} of ${reading.sessionPages.length}.`
+                    : `${reading.sessionPages.length} pages. Just read each one and tap Next.`}
+              </div>
+              <button
+                onClick={() => navigate('/revise/reading')}
+                disabled={reading.cycleLength === 0}
+                className="btn-gradient w-full text-white rounded-xl py-3 text-sm font-bold disabled:opacity-40"
+              >
+                {reading.cycleLength === 0
+                  ? 'Add pages first'
+                  : reading.cursorWithinBatch > 0
+                    ? `Resume at page ${reading.cursorWithinBatch + 1} →`
+                    : `Start Juz ${reading.currentJuz} →`}
+              </button>
+              {reading.cursorWithinBatch > 0 && reading.currentJuz !== null && (
+                <button
+                  onClick={() =>
+                    updateDevice({ readingCursor: reading.batchStart })
+                  }
+                  className="w-full mt-2 text-xs text-slate-500 hover:text-slate-300 py-1.5"
+                >
+                  ↺ Restart Juz {reading.currentJuz} from page 1
+                </button>
+              )}
+            </>
           )}
         </div>
 
         <button
           onClick={() => navigate('/revise')}
-          disabled={algoSnapshotTotal === 0}
+          disabled={algoSnapshotTotal === 0 && !algoCompletedToday}
           className="w-full glass rounded-3xl p-5 mb-5 relative overflow-hidden text-left disabled:opacity-50"
         >
           <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
@@ -203,21 +233,21 @@ export function Dashboard() {
             )}
           </div>
           <div className="text-lg font-bold mb-1">
-            {algoSnapshotTotal === 0
-              ? 'Nothing due today'
-              : algoAllDone
-                ? 'All done for today ✓'
+            {algoCompletedToday
+              ? 'All done for today ✓'
+              : algoSnapshotTotal === 0
+                ? 'Nothing due today'
                 : algoSnapshotActive
                   ? `${algoRemaining} ${algoRemaining === 1 ? 'page' : 'pages'} remaining`
                   : `${algoSnapshotTotal} ${algoSnapshotTotal === 1 ? 'page' : 'pages'} due`}
           </div>
           <div className="text-xs text-slate-400 leading-relaxed">
-            {algoSnapshotTotal === 0
-              ? 'Check back tomorrow.'
-              : algoAllDone
-                ? 'A fresh batch will be picked tomorrow.'
+            {algoCompletedToday
+              ? 'A fresh batch will be picked tomorrow.'
+              : algoSnapshotTotal === 0
+                ? 'Check back tomorrow.'
                 : algoSnapshotActive
-                  ? `Today’s batch is locked in — same pages stay until you finish all ${algoSnapshotTotal}.`
+                  ? `Batch locked in — same pages carry forward until you finish all ${algoSnapshotTotal}.`
                   : `${tasks.recentPages.length} recent + ${tasks.spacedPages.length} algorithm-picked (most overdue + weakest). Rate weak/okay/strong.`}
           </div>
         </button>

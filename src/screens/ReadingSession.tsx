@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { format } from 'date-fns'
 import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useSession } from '../hooks/useSession'
 import { useDeviceSettings } from '../hooks/useDeviceSettings'
@@ -59,6 +60,12 @@ export function ReadingSession() {
     updateDevice({ readingCursor: next.cursor, readingLoops: next.loops })
   }
 
+  const today = format(new Date(), 'yyyy-MM-dd')
+
+  const markJuzCompleteForToday = () => {
+    updateDevice({ readingLastCompletedDate: today })
+  }
+
   const handleNext = async () => {
     if (!currentPage) return
     await startSession('revision')
@@ -66,6 +73,7 @@ export function ReadingSession() {
     const nextPos = batchPosition + 1
     persistProgress(nextPos)
     if (nextPos >= allPages.length) {
+      markJuzCompleteForToday()
       await completeSession(allPages.length)
       navigate('/')
       return
@@ -77,11 +85,32 @@ export function ReadingSession() {
     const nextPos = batchPosition + 1
     persistProgress(nextPos)
     if (nextPos >= allPages.length) {
+      markJuzCompleteForToday()
       await completeSession(allPages.length)
       navigate('/')
       return
     }
     setDoneSinceMount((d) => d + 1)
+  }
+
+  // Locked: the user already finished their juz today.
+  if (device.readingLastCompletedDate === today) {
+    return (
+      <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="text-5xl mb-1">🌙</div>
+        <div className="text-xl font-bold">Today’s reading is complete</div>
+        <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
+          Well done — you finished a whole juz today. May Allah accept it.
+          The next juz unlocks tomorrow.
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          className="mt-3 bg-[#151a23] border border-slate-700 text-slate-300 rounded-xl px-4 py-2 text-sm font-semibold"
+        >
+          ← Back to dashboard
+        </button>
+      </div>
+    )
   }
 
   if (!focus || allPages.length === 0) {

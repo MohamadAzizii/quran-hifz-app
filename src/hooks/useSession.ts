@@ -38,6 +38,8 @@ export function useSession() {
         .single()
       if (error || !data) return null
       setSession(data.id)
+      // Fresh session row exists — refresh the streak so today lights up.
+      queryClient.invalidateQueries({ queryKey: ['streak'] })
       return data.id
     })()
 
@@ -106,6 +108,7 @@ export function useSession() {
       .eq('id', sid)
     setSession(null)
     queryClient.invalidateQueries({ queryKey: ['rep-stats'] })
+    queryClient.invalidateQueries({ queryKey: ['streak'] })
   }
 
   return {

@@ -38,17 +38,29 @@ export function RevisionSession() {
 
   const today = format(new Date(), 'yyyy-MM-dd')
 
-  // Snapshot the day's 4 pages on first render where pages are loaded.
-  // After the snapshot is taken, subsequent re-renders never re-derive the
-  // batch from `tasks` — that's the whole point.
+  // Snapshot the day's 4 pages on first render where pages are loaded. An
+  // existing snapshot is kept and carries forward indefinitely until it's
+  // fully rated — only after the last page is completed does a new batch get
+  // picked the following day. This way an unfinished day's batch is the same
+  // batch you see tomorrow (no extras added).
   const snapshotRef = useRef<number[] | null>(null)
   if (snapshotRef.current === null && pages.length > 0) {
-    if (
-      device.algoBatchDate === today &&
-      device.algoBatchPages.length > 0
-    ) {
+    const snapshotExists = device.algoBatchPages.length > 0
+    const snapshotComplete =
+      snapshotExists &&
+      device.algoBatchDone.length >= device.algoBatchPages.length
+    const snapshotToday = device.algoBatchDate === today
+
+    if (snapshotExists && !snapshotComplete) {
+      // Carry forward — re-stamp the date so today's completion is tracked here.
+      snapshotRef.current = device.algoBatchPages
+      if (!snapshotToday) updateDevice({ algoBatchDate: today })
+    } else if (snapshotExists && snapshotComplete && snapshotToday) {
+      // All done for today — keep the snapshot so the all-done state renders.
       snapshotRef.current = device.algoBatchPages
     } else {
+      // Either no snapshot at all, or last snapshot completed on a previous
+      // day — pick a fresh batch from today's algorithm picks.
       const fresh = [
         ...tasks.recentPages.map((p) => p.page_number),
         ...tasks.spacedPages.map((p) => p.page_number),
@@ -65,8 +77,7 @@ export function RevisionSession() {
   }
 
   const snapshotPageNumbers = snapshotRef.current ?? []
-  const ratedNumbers =
-    device.algoBatchDate === today ? device.algoBatchDone : []
+  const ratedNumbers = device.algoBatchDone
   const pageMap = new Map(
     pages.map((p) => [p.page_number, p as UserPageWithMeta])
   )
