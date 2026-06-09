@@ -10,6 +10,12 @@ const DEFAULTS: Omit<UserSettings, 'user_id'> = {
   recent_cycle_days: 3,
   notifications_enabled: true,
   daily_reminder_time: '08:00',
+  reading_cursor: 0,
+  reading_loops: 0,
+  reading_last_completed_date: null,
+  algo_batch_date: null,
+  algo_batch_pages: [],
+  algo_batch_done: [],
 }
 
 export function useSettings() {

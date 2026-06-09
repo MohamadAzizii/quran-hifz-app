@@ -4,7 +4,6 @@ import { format } from 'date-fns'
 import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
 import { useSettings } from '../hooks/useSettings'
-import { useDeviceSettings } from '../hooks/useDeviceSettings'
 import { useAutoGraduate } from '../hooks/useAutoGraduate'
 import { JuzStrengthMap } from '../components/JuzStrengthMap'
 import { RepStatsCard } from '../components/RepStatsCard'
@@ -21,17 +20,16 @@ export function Dashboard() {
   const navigate = useNavigate()
   const { data: pages = [], isLoading: pagesLoading } = useUserPagesQuery()
   const { tasks } = useTodaysTasks()
-  const { settings } = useSettings()
-  const { settings: device, update: updateDevice } = useDeviceSettings()
+  const { settings, updateSettings } = useSettings()
 
   const reading = useMemo(
     () =>
       getReadingFocus(
         pages as UserPageWithJuz[],
-        device.readingCursor,
-        device.readingLoops
+        settings?.reading_cursor ?? 0,
+        settings?.reading_loops ?? 0
       ),
-    [pages, device.readingCursor, device.readingLoops]
+    [pages, settings?.reading_cursor, settings?.reading_loops]
   )
   const readingFirst = reading.sessionPages[0]
   const readingLast = reading.sessionPages[reading.sessionPages.length - 1]
@@ -40,10 +38,11 @@ export function Dashboard() {
       ? `Juz ${readingFirst.pages.juz} · ${readingFirst.pages.surah_name} → ${readingLast.pages.surah_name}`
       : ''
   const today = format(new Date(), 'yyyy-MM-dd')
-  const algoSnapshotExists = device.algoBatchPages.length > 0
+  const algoSnapshotExists = (settings?.algo_batch_pages.length ?? 0) > 0
   const algoSnapshotComplete =
     algoSnapshotExists &&
-    device.algoBatchDone.length >= device.algoBatchPages.length
+    (settings?.algo_batch_done.length ?? 0) >=
+      (settings?.algo_batch_pages.length ?? 0)
   // An incomplete snapshot is the live one regardless of date — it carries
   // forward until rated. A complete snapshot only matters if it was completed
   // today (lets us show "all done"); otherwise we fall back to today's pick.
@@ -51,11 +50,13 @@ export function Dashboard() {
   const algoCompletedToday =
     algoSnapshotExists &&
     algoSnapshotComplete &&
-    device.algoBatchDate === today
+    settings?.algo_batch_date === today
   const algoSnapshotTotal = algoSnapshotActive
-    ? device.algoBatchPages.length
+    ? settings?.algo_batch_pages.length ?? 0
     : tasks.recentPages.length + tasks.spacedPages.length
-  const algoSnapshotDone = algoSnapshotActive ? device.algoBatchDone.length : 0
+  const algoSnapshotDone = algoSnapshotActive
+    ? settings?.algo_batch_done.length ?? 0
+    : 0
   const algoRemaining = algoSnapshotTotal - algoSnapshotDone
 
   const memorisedCount = pages.filter(
@@ -162,7 +163,7 @@ export function Dashboard() {
               </div>
             )}
           </div>
-          {device.readingLastCompletedDate === today ? (
+          {settings?.reading_last_completed_date === today ? (
             <>
               <div className="text-lg font-bold mb-1">
                 Today’s reading complete 🌙
@@ -205,7 +206,7 @@ export function Dashboard() {
               {reading.cursorWithinBatch > 0 && reading.currentJuz !== null && (
                 <button
                   onClick={() =>
-                    updateDevice({ readingCursor: reading.batchStart })
+                    updateSettings({ reading_cursor: reading.batchStart })
                   }
                   className="w-full mt-2 text-xs text-slate-500 hover:text-slate-300 py-1.5"
                 >

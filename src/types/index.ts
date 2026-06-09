@@ -62,6 +62,13 @@ export interface UserSettings {
   recent_cycle_days: number
   notifications_enabled: boolean
   daily_reminder_time: string // HH:MM
+  // Synced across devices (moved from device-only localStorage):
+  reading_cursor: number
+  reading_loops: number
+  reading_last_completed_date: string | null // yyyy-MM-dd
+  algo_batch_date: string | null // yyyy-MM-dd
+  algo_batch_pages: number[]
+  algo_batch_done: number[]
 }
 
 export interface TodaysTasks {

@@ -9,17 +9,6 @@ export interface DeviceSettings {
   repsWeak: number
   repsOkay: number
   repsStrong: number
-  readingCursor: number
-  readingLoops: number
-  // The last day the user finished a juz in the reading flow. While this
-  // equals today, reading is locked — they get a "well done" screen instead.
-  readingLastCompletedDate: string
-  // Algorithm-revision batch snapshot for the current day. The 4 page_numbers
-  // are picked once when the session is first opened today and stay frozen so
-  // mid-session/cross-session re-entries preserve which pages are still pending.
-  algoBatchDate: string
-  algoBatchPages: number[]
-  algoBatchDone: number[]
 }
 
 const KEY = 'device-settings'
@@ -31,12 +20,6 @@ const DEFAULTS: DeviceSettings = {
   repsWeak: 15,
   repsOkay: 10,
   repsStrong: 5,
-  readingCursor: 0,
-  readingLoops: 0,
-  readingLastCompletedDate: '',
-  algoBatchDate: '',
-  algoBatchPages: [],
-  algoBatchDone: [],
 }
 
 function load(): DeviceSettings {

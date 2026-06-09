@@ -8,6 +8,7 @@ import {
 } from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
 import { useSession } from '../hooks/useSession'
+import { useSettings } from '../hooks/useSettings'
 import { MushafImage } from '../components/MushafImage'
 import { PageTransition } from '../components/PageTransition'
 import { RatingButtons } from '../components/RatingButtons'
@@ -28,7 +29,8 @@ export function RevisionSession() {
   const { data: pages = [] } = useUserPagesQuery()
   const { tasks } = useTodaysTasks()
   const { startSession, logRating, completeSession } = useSession()
-  const { settings: device, update: updateDevice } = useDeviceSettings()
+  const { settings, updateSettings } = useSettings()
+  const { settings: device } = useDeviceSettings()
 
   const suggestedRepsByRating: Record<Rating, number> = {
     weak: device.repsWeak,
@@ -38,46 +40,42 @@ export function RevisionSession() {
 
   const today = format(new Date(), 'yyyy-MM-dd')
 
-  // Snapshot the day's 4 pages on first render where pages are loaded. An
-  // existing snapshot is kept and carries forward indefinitely until it's
-  // fully rated — only after the last page is completed does a new batch get
-  // picked the following day. This way an unfinished day's batch is the same
-  // batch you see tomorrow (no extras added).
+  // Snapshot the day's 4 pages on first render where pages and settings are
+  // loaded. An existing snapshot is kept and carries forward indefinitely
+  // until it's fully rated — only after the last page is completed does a new
+  // batch get picked the following day. The snapshot lives on user_settings so
+  // it syncs across devices.
   const snapshotRef = useRef<number[] | null>(null)
-  if (snapshotRef.current === null && pages.length > 0) {
-    const snapshotExists = device.algoBatchPages.length > 0
+  if (snapshotRef.current === null && pages.length > 0 && settings) {
+    const snapshotExists = settings.algo_batch_pages.length > 0
     const snapshotComplete =
       snapshotExists &&
-      device.algoBatchDone.length >= device.algoBatchPages.length
-    const snapshotToday = device.algoBatchDate === today
+      settings.algo_batch_done.length >= settings.algo_batch_pages.length
+    const snapshotToday = settings.algo_batch_date === today
 
     if (snapshotExists && !snapshotComplete) {
-      // Carry forward — re-stamp the date so today's completion is tracked here.
-      snapshotRef.current = device.algoBatchPages
-      if (!snapshotToday) updateDevice({ algoBatchDate: today })
+      snapshotRef.current = settings.algo_batch_pages
+      if (!snapshotToday) updateSettings({ algo_batch_date: today })
     } else if (snapshotExists && snapshotComplete && snapshotToday) {
-      // All done for today — keep the snapshot so the all-done state renders.
-      snapshotRef.current = device.algoBatchPages
+      snapshotRef.current = settings.algo_batch_pages
     } else {
-      // Either no snapshot at all, or last snapshot completed on a previous
-      // day — pick a fresh batch from today's algorithm picks.
       const fresh = [
         ...tasks.recentPages.map((p) => p.page_number),
         ...tasks.spacedPages.map((p) => p.page_number),
       ]
       snapshotRef.current = fresh
       if (fresh.length > 0) {
-        updateDevice({
-          algoBatchDate: today,
-          algoBatchPages: fresh,
-          algoBatchDone: [],
+        updateSettings({
+          algo_batch_date: today,
+          algo_batch_pages: fresh,
+          algo_batch_done: [],
         })
       }
     }
   }
 
   const snapshotPageNumbers = snapshotRef.current ?? []
-  const ratedNumbers = device.algoBatchDone
+  const ratedNumbers = settings?.algo_batch_done ?? []
   const pageMap = new Map(
     pages.map((p) => [p.page_number, p as UserPageWithMeta])
   )
@@ -116,7 +114,7 @@ export function RevisionSession() {
     await applyRating.mutateAsync({ page: currentPage, rating })
 
     const newRated = [...ratedNumbers, currentPage.page_number]
-    updateDevice({ algoBatchDone: newRated })
+    updateSettings({ algo_batch_done: newRated })
     setRating(null)
     setReps(0)
 

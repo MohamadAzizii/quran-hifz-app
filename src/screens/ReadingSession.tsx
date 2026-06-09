@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useSession } from '../hooks/useSession'
-import { useDeviceSettings } from '../hooks/useDeviceSettings'
+import { useSettings } from '../hooks/useSettings'
 import { MushafImage } from '../components/MushafImage'
 import { PageTransition } from '../components/PageTransition'
 import {
@@ -20,17 +20,17 @@ import {
 export function ReadingSession() {
   const navigate = useNavigate()
   const { data: pages = [] } = useUserPagesQuery()
-  const { settings: device, update: updateDevice } = useDeviceSettings()
+  const { settings, updateSettings } = useSettings()
   const { startSession, logRevisionReps, completeSession } = useSession()
 
   // Snapshot the focus on first render where pages are loaded; subsequent
   // cursor updates (driven by this session) must not reshuffle the in-progress UI.
   const focusRef = useRef<ReadingFocus | null>(null)
-  if (focusRef.current === null && pages.length > 0) {
+  if (focusRef.current === null && pages.length > 0 && settings) {
     focusRef.current = getReadingFocus(
       pages as UserPageWithJuz[],
-      device.readingCursor,
-      device.readingLoops
+      settings.reading_cursor,
+      settings.reading_loops
     )
   }
   const focus = focusRef.current
@@ -57,13 +57,13 @@ export function ReadingSession() {
       focus.cycleLength,
       focus.loops
     )
-    updateDevice({ readingCursor: next.cursor, readingLoops: next.loops })
+    updateSettings({ reading_cursor: next.cursor, reading_loops: next.loops })
   }
 
   const today = format(new Date(), 'yyyy-MM-dd')
 
   const markJuzCompleteForToday = () => {
-    updateDevice({ readingLastCompletedDate: today })
+    updateSettings({ reading_last_completed_date: today })
   }
 
   const handleNext = async () => {
@@ -94,7 +94,7 @@ export function ReadingSession() {
   }
 
   // Locked: the user already finished their juz today.
-  if (device.readingLastCompletedDate === today) {
+  if (settings?.reading_last_completed_date === today) {
     return (
       <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-3 px-6 text-center">
         <div className="text-5xl mb-1">🌙</div>
