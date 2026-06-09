@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApplyRating } from '../hooks/useUserPages'
+import { format } from 'date-fns'
+import {
+  useApplyRating,
+  useUserPagesQuery,
+  type UserPageWithMeta,
+} from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
 import { useSession } from '../hooks/useSession'
 import { MushafImage } from '../components/MushafImage'
@@ -9,66 +14,116 @@ import { RatingButtons } from '../components/RatingButtons'
 import { RepCounter } from '../components/RepCounter'
 import { useDeviceSettings } from '../hooks/useDeviceSettings'
 import type { Rating } from '../types'
-import type { UserPageWithMeta } from '../hooks/useUserPages'
 
+// Algorithm revision: today's 4 picks are snapshotted to device settings the
+// first time the screen opens today. Without the snapshot, useApplyRating
+// mutates the rated page → React Query invalidates → computeTodaysTasks
+// re-picks, so the array shifts under the user's feet within a session and is
+// entirely different across re-entries. With it, the same 4 pages stay
+// visible until they're all rated; only the day rollover (or a manual restart)
+// gets a fresh pick.
 export function RevisionSession() {
   const navigate = useNavigate()
   const applyRating = useApplyRating()
+  const { data: pages = [] } = useUserPagesQuery()
   const { tasks } = useTodaysTasks()
   const { startSession, logRating, completeSession } = useSession()
-  const { settings: device } = useDeviceSettings()
+  const { settings: device, update: updateDevice } = useDeviceSettings()
+
   const suggestedRepsByRating: Record<Rating, number> = {
     weak: device.repsWeak,
     okay: device.repsOkay,
     strong: device.repsStrong,
   }
 
-  const allPages: UserPageWithMeta[] = [
-    ...(tasks.recentPages as UserPageWithMeta[]),
-    ...(tasks.spacedPages as UserPageWithMeta[]),
-  ]
+  const today = format(new Date(), 'yyyy-MM-dd')
 
-  const [currentIndex, setCurrentIndex] = useState(0)
+  // Snapshot the day's 4 pages on first render where pages are loaded.
+  // After the snapshot is taken, subsequent re-renders never re-derive the
+  // batch from `tasks` — that's the whole point.
+  const snapshotRef = useRef<number[] | null>(null)
+  if (snapshotRef.current === null && pages.length > 0) {
+    if (
+      device.algoBatchDate === today &&
+      device.algoBatchPages.length > 0
+    ) {
+      snapshotRef.current = device.algoBatchPages
+    } else {
+      const fresh = [
+        ...tasks.recentPages.map((p) => p.page_number),
+        ...tasks.spacedPages.map((p) => p.page_number),
+      ]
+      snapshotRef.current = fresh
+      if (fresh.length > 0) {
+        updateDevice({
+          algoBatchDate: today,
+          algoBatchPages: fresh,
+          algoBatchDone: [],
+        })
+      }
+    }
+  }
+
+  const snapshotPageNumbers = snapshotRef.current ?? []
+  const ratedNumbers =
+    device.algoBatchDate === today ? device.algoBatchDone : []
+  const pageMap = new Map(
+    pages.map((p) => [p.page_number, p as UserPageWithMeta])
+  )
+  const batchPages = snapshotPageNumbers
+    .map((num) => pageMap.get(num))
+    .filter((p): p is UserPageWithMeta => !!p)
+  const unratedPages = batchPages.filter(
+    (p) => !ratedNumbers.includes(p.page_number)
+  )
+
+  // Local skip cursor — moves within the unrated set without mutating done.
+  // Wraps modulo unratedPages.length so endless skips cycle through what's
+  // still pending.
+  const [skipPosition, setSkipPosition] = useState(0)
+  const safePosition =
+    unratedPages.length > 0 ? skipPosition % unratedPages.length : 0
+  const currentPage = unratedPages[safePosition] ?? null
+
   const [rating, setRating] = useState<Rating | null>(null)
   const [reps, setReps] = useState(0)
-
-  const currentPage = allPages[currentIndex] ?? null
   const suggestedReps = rating ? suggestedRepsByRating[rating] : 0
 
   const startedRef = useRef(false)
   useEffect(() => {
     if (startedRef.current) return
+    if (snapshotPageNumbers.length === 0) return
     startedRef.current = true
     startSession('revision')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [snapshotPageNumbers.length])
 
   const handleNext = async () => {
     if (!currentPage || !rating) return
+    await startSession('revision')
     await logRating(currentPage.page_number, rating, { reps_revision: reps })
     await applyRating.mutateAsync({ page: currentPage, rating })
 
-    if (currentIndex + 1 >= allPages.length) {
-      await completeSession(allPages.length)
-      navigate('/')
-      return
-    }
-    setCurrentIndex((i) => i + 1)
+    const newRated = [...ratedNumbers, currentPage.page_number]
+    updateDevice({ algoBatchDone: newRated })
     setRating(null)
     setReps(0)
+
+    if (newRated.length >= batchPages.length) {
+      await completeSession(batchPages.length)
+      navigate('/')
+    }
   }
 
   const handleSkip = () => {
-    if (currentIndex + 1 >= allPages.length) {
-      navigate('/')
-      return
-    }
-    setCurrentIndex((i) => i + 1)
+    setSkipPosition((p) => p + 1)
     setRating(null)
     setReps(0)
   }
 
-  if (allPages.length === 0) {
+  // Empty/all-done states ------------------------------------------------
+
+  if (snapshotPageNumbers.length === 0) {
     return (
       <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-4 px-4">
         <div className="text-4xl">🎉</div>
@@ -80,36 +135,60 @@ export function RevisionSession() {
     )
   }
 
-  return (
-    <PageTransition>
-    <div className="min-h-screen bg-[#0b0e14] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
-      <div className="flex items-center gap-3 mb-4">
+  if (!currentPage) {
+    // All snapshotted pages have been rated — done for today.
+    return (
+      <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="text-4xl">✓</div>
+        <div className="text-lg font-bold">All done for today</div>
+        <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
+          You finished today’s {batchPages.length}-page algorithm revision.
+          A fresh batch will be picked tomorrow.
+        </p>
         <button
           onClick={() => navigate('/')}
-          className="bg-[#151a23] text-slate-400 rounded-lg px-3 py-2 text-sm"
-          aria-label="Back to dashboard"
+          className="mt-3 bg-[#151a23] border border-slate-700 text-slate-300 rounded-xl px-4 py-2 text-sm font-semibold"
         >
-          ← Back
+          ← Back to dashboard
         </button>
-        <h1 className="text-lg font-bold flex-1">Revision Session</h1>
       </div>
+    )
+  }
 
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-xs text-slate-500">
-          Page {currentIndex + 1} of {allPages.length}
-        </span>
-        <div className="flex-1 bg-[#151a23] rounded-full h-1.5">
-          <div
-            className="bg-purple-500 h-1.5 rounded-full transition-all"
-            style={{ width: `${((currentIndex + 1) / allPages.length) * 100}%` }}
-          />
+  const completedCount = batchPages.length - unratedPages.length
+  const positionLabel = completedCount + 1 // 1-indexed display
+
+  return (
+    <PageTransition>
+      <div className="min-h-screen bg-[#0b0e14] text-white px-4 md:px-8 pt-5 md:pt-10 pb-24 md:pb-10 max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => navigate('/')}
+            className="bg-[#151a23] text-slate-400 rounded-lg px-3 py-2 text-sm"
+            aria-label="Back to dashboard"
+          >
+            ← Back
+          </button>
+          <h1 className="text-lg font-bold flex-1">Revision Session</h1>
         </div>
-        <span className="text-xs text-slate-500">
-          {allPages.length - currentIndex - 1} left
-        </span>
-      </div>
 
-      {currentPage && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xs text-slate-500">
+            Page {positionLabel} of {batchPages.length}
+          </span>
+          <div className="flex-1 bg-[#151a23] rounded-full h-1.5">
+            <div
+              className="bg-purple-500 h-1.5 rounded-full transition-all"
+              style={{
+                width: `${(positionLabel / batchPages.length) * 100}%`,
+              }}
+            />
+          </div>
+          <span className="text-xs text-slate-500">
+            {unratedPages.length - 1} left
+          </span>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6 lg:items-start">
           <div className="lg:order-1">
             <MushafImage
@@ -124,7 +203,9 @@ export function RevisionSession() {
           <div className="lg:order-2 lg:sticky lg:top-10 lg:self-start">
             <div className="bg-[#151a23] rounded-xl p-3 flex justify-between items-center mb-3">
               <div>
-                <div className="text-base font-bold">Page {currentPage.page_number}</div>
+                <div className="text-base font-bold">
+                  Page {currentPage.page_number}
+                </div>
                 <div className="text-xs text-slate-500 mt-0.5">
                   {currentPage.pages.surah_name} · Juz {currentPage.pages.juz}
                 </div>
@@ -132,14 +213,17 @@ export function RevisionSession() {
               <div className="text-right">
                 <div
                   className={`text-xs font-bold uppercase ${
-                    currentPage.status === 'recent' ? 'text-amber-400' : 'text-purple-400'
+                    currentPage.status === 'recent'
+                      ? 'text-amber-400'
+                      : 'text-purple-400'
                   }`}
                 >
                   {currentPage.status === 'recent' ? '🔁 Recent' : '🧠 Spaced'}
                 </div>
                 {currentPage.last_reviewed_at && (
                   <div className="text-xs text-slate-600 mt-0.5">
-                    Last {new Date(currentPage.last_reviewed_at).toLocaleDateString()}
+                    Last{' '}
+                    {new Date(currentPage.last_reviewed_at).toLocaleDateString()}
                   </div>
                 )}
               </div>
@@ -190,13 +274,12 @@ export function RevisionSession() {
                 disabled={!rating}
                 className="btn-gradient flex-1 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-40"
               >
-                {currentIndex + 1 >= allPages.length ? 'Finish ✓' : 'Next page →'}
+                {unratedPages.length <= 1 ? 'Finish ✓' : 'Next page →'}
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </div>
     </PageTransition>
   )
 }

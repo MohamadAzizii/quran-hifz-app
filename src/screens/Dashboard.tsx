@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { format } from 'date-fns'
 import { useUserPagesQuery } from '../hooks/useUserPages'
 import { useTodaysTasks } from '../hooks/useTodaysTasks'
 import { useSettings } from '../hooks/useSettings'
@@ -36,7 +37,17 @@ export function Dashboard() {
     readingFirst && readingLast
       ? `Juz ${readingFirst.pages.juz} · ${readingFirst.pages.surah_name} → ${readingLast.pages.surah_name}`
       : ''
-  const algorithmCount = tasks.recentPages.length + tasks.spacedPages.length
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const algoSnapshotActive =
+    device.algoBatchDate === today && device.algoBatchPages.length > 0
+  const algoSnapshotTotal = algoSnapshotActive
+    ? device.algoBatchPages.length
+    : tasks.recentPages.length + tasks.spacedPages.length
+  const algoSnapshotDone = algoSnapshotActive
+    ? device.algoBatchDone.length
+    : 0
+  const algoRemaining = algoSnapshotTotal - algoSnapshotDone
+  const algoAllDone = algoSnapshotActive && algoRemaining <= 0
 
   const memorisedCount = pages.filter(
     (p) => p.status === 'memorised' || p.status === 'recent'
@@ -177,22 +188,37 @@ export function Dashboard() {
 
         <button
           onClick={() => navigate('/revise')}
-          disabled={algorithmCount === 0}
+          disabled={algoSnapshotTotal === 0}
           className="w-full glass rounded-3xl p-5 mb-5 relative overflow-hidden text-left disabled:opacity-50"
         >
           <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
-          <div className="text-[10px] uppercase tracking-widest text-purple-300/90 mb-1">
-            Algorithm revision · up to 4 pages
+          <div className="flex items-start justify-between mb-1">
+            <div className="text-[10px] uppercase tracking-widest text-purple-300/90">
+              Algorithm revision · up to 4 pages
+            </div>
+            {algoSnapshotActive && (
+              <div className="text-[10px] uppercase tracking-widest text-purple-400/80 bg-purple-500/10 border border-purple-400/20 rounded-md px-2 py-0.5">
+                {algoSnapshotDone}/{algoSnapshotTotal} done
+              </div>
+            )}
           </div>
           <div className="text-lg font-bold mb-1">
-            {algorithmCount === 0
+            {algoSnapshotTotal === 0
               ? 'Nothing due today'
-              : `${algorithmCount} ${algorithmCount === 1 ? 'page' : 'pages'} due`}
+              : algoAllDone
+                ? 'All done for today ✓'
+                : algoSnapshotActive
+                  ? `${algoRemaining} ${algoRemaining === 1 ? 'page' : 'pages'} remaining`
+                  : `${algoSnapshotTotal} ${algoSnapshotTotal === 1 ? 'page' : 'pages'} due`}
           </div>
           <div className="text-xs text-slate-400 leading-relaxed">
-            {algorithmCount === 0
+            {algoSnapshotTotal === 0
               ? 'Check back tomorrow.'
-              : `${tasks.recentPages.length} recent + ${tasks.spacedPages.length} algorithm-picked (most overdue + weakest). Rate weak/okay/strong.`}
+              : algoAllDone
+                ? 'A fresh batch will be picked tomorrow.'
+                : algoSnapshotActive
+                  ? `Today’s batch is locked in — same pages stay until you finish all ${algoSnapshotTotal}.`
+                  : `${tasks.recentPages.length} recent + ${tasks.spacedPages.length} algorithm-picked (most overdue + weakest). Rate weak/okay/strong.`}
           </div>
         </button>
 

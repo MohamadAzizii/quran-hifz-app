@@ -11,6 +11,12 @@ export interface DeviceSettings {
   repsStrong: number
   readingCursor: number
   readingLoops: number
+  // Algorithm-revision batch snapshot for the current day. The 4 page_numbers
+  // are picked once when the session is first opened today and stay frozen so
+  // mid-session/cross-session re-entries preserve which pages are still pending.
+  algoBatchDate: string
+  algoBatchPages: number[]
+  algoBatchDone: number[]
 }
 
 const KEY = 'device-settings'
@@ -24,6 +30,9 @@ const DEFAULTS: DeviceSettings = {
   repsStrong: 5,
   readingCursor: 0,
   readingLoops: 0,
+  algoBatchDate: '',
+  algoBatchPages: [],
+  algoBatchDone: [],
 }
 
 function load(): DeviceSettings {
