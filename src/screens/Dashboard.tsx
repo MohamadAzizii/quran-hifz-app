@@ -177,6 +177,15 @@ export function Dashboard() {
               >
                 ✓ Complete for today
               </button>
+              <button
+                onClick={() => {
+                  updateSettings({ reading_last_completed_date: null })
+                  navigate('/revise/reading')
+                }}
+                className="w-full mt-2 text-xs text-slate-500 hover:text-slate-300 py-1.5"
+              >
+                Do another juz today →
+              </button>
             </>
           ) : (
             <>

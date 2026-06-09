@@ -103,12 +103,22 @@ export function ReadingSession() {
           Well done — you finished a whole juz today. May Allah accept it.
           The next juz unlocks tomorrow.
         </p>
-        <button
-          onClick={() => navigate('/')}
-          className="mt-3 bg-[#151a23] border border-slate-700 text-slate-300 rounded-xl px-4 py-2 text-sm font-semibold"
-        >
-          ← Back to dashboard
-        </button>
+        <div className="flex flex-col gap-2 mt-3 w-full max-w-xs">
+          <button
+            onClick={() => {
+              updateSettings({ reading_last_completed_date: null })
+            }}
+            className="btn-gradient text-white rounded-xl py-3 text-sm font-bold"
+          >
+            Do another juz today →
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-[#151a23] border border-slate-700 text-slate-300 rounded-xl px-4 py-2 text-sm font-semibold"
+          >
+            ← Back to dashboard
+          </button>
+        </div>
       </div>
     )
   }
