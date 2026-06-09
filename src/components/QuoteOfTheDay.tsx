@@ -1,20 +1,28 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { QURAN_QUOTES } from '../data/quran-quotes'
 
-// Day-of-year mod list length → quote rotates daily but is deterministic for
-// today. The shuffle button lets the user spin through other quotes if they
-// want; doesn't persist.
-function dayOfYear(d: Date): number {
-  const start = Date.UTC(d.getFullYear(), 0, 0)
-  const now = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
-  return Math.floor((now - start) / 86_400_000)
+// Sequential rotation across QURAN_QUOTES, persisted to localStorage so each
+// landing on the dashboard advances by one and cycles through the whole list
+// before repeating. Lazy useState initializer runs once per mount = once per
+// Dashboard visit.
+const STORAGE_KEY = 'quote-rotation-index'
+
+function nextIndex(): number {
+  if (typeof window === 'undefined') return 0
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const last = Number.parseInt(raw ?? '-1', 10)
+    const safe = Number.isFinite(last) ? last : -1
+    const next = (safe + 1) % QURAN_QUOTES.length
+    window.localStorage.setItem(STORAGE_KEY, String(next))
+    return next
+  } catch {
+    return 0
+  }
 }
 
 export function QuoteOfTheDay() {
-  const baseIndex = useMemo(
-    () => dayOfYear(new Date()) % QURAN_QUOTES.length,
-    []
-  )
+  const [baseIndex] = useState(nextIndex)
   const [offset, setOffset] = useState(0)
   const quote = QURAN_QUOTES[(baseIndex + offset) % QURAN_QUOTES.length]
 
@@ -23,7 +31,7 @@ export function QuoteOfTheDay() {
       <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
       <div className="flex items-center justify-between mb-2">
         <div className="text-[10px] uppercase tracking-widest text-amber-300/90">
-          {quote.type === 'verse' ? 'Verse' : 'Hadith'} of the day
+          {quote.type === 'verse' ? 'Verse · reminder' : 'Hadith · reminder'}
         </div>
         <button
           onClick={() => setOffset((o) => o + 1)}
